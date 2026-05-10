@@ -335,7 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // -------------------------------------------------------------------------
     // INISIALISASI VARIABEL GLOBAL
     // -------------------------------------------------------------------------
-    // Ambil data cart dari session (passing dari PHP ke JS via @json directive)
     const cart = @json(session()->get('cart', []));
     
     // Variabel untuk kalkulasi

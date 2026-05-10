@@ -13,7 +13,7 @@
                 <div class="card shadow">
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <h3 class="card-title">Admin Tintaku</h3>
+                            <h3 class="card-title">Login Tintaku Padamu Ga Ilang Ilang</h3>
                             <p class="text-muted">Login to access admin panel</p>
                         </div>
 
@@ -87,14 +87,6 @@
                                     Login
                                 </button>
                             </div>
-
-                            @if (Route::has('password.request'))
-                                <div class="text-center mt-3">
-                                    <a href="{{ route('password.request') }}" class="text-decoration-none">
-                                        Forgot your password?
-                                    </a>
-                                </div>
-                            @endif
                         </form>
 
                         <!-- Admin Credentials Info -->
