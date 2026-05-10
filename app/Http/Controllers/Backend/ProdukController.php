@@ -53,33 +53,56 @@ class ProdukController extends Controller
     */
     public function store(Request $request)
     {
-        $request->validate([
-            'kategori_id' => 'required',
-            'nama_produk' => 'required',
-            'harga' => 'required',
-            'stok' => 'required',
-            'berat' => 'required',
-            'detail' => 'required',
-            'foto' => 'required|image'
-        ]);
+        try {
+            $request->validate([
+                'kategori_id' => 'required|exists:kategori,id',
+                'nama_produk' => 'required|string|max:255',
+                'harga' => 'required|numeric|min:0',
+                'stok' => 'required|integer|min:0',
+                'berat' => 'required|numeric|min:0',
+                'detail' => 'required|string',
+                'foto' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
 
-        $foto = $request->file('foto');
-        $namaFoto = time().'.'.$foto->extension();
-        $foto->move(public_path('produk'), $namaFoto);
+            // Ensure the produk directory exists
+            $produkPath = public_path('produk');
+            if (!file_exists($produkPath)) {
+                mkdir($produkPath, 0755, true);
+            }
 
-        Produk::create([
-            'kategori_id' => $request->kategori_id,
-            'nama_produk' => $request->nama_produk,
-            'harga' => $request->harga,
-            'stok' => $request->stok,
-            'berat' => $request->berat,
-            'detail' => $request->detail,
-            'foto' => $namaFoto,
-            'status' => 1
-        ]);
+            if ($request->hasFile('foto')) {
+                $foto = $request->file('foto');
+                $namaFoto = time().'.'.$foto->extension();
+                $foto->move($produkPath, $namaFoto);
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Foto produk wajib diupload')
+                    ->withInput();
+            }
 
-        return redirect()->route('backend.produk.index')
-            ->with('success', 'Produk berhasil ditambah');
+            Produk::create([
+                'kategori_id' => $request->kategori_id,
+                'nama_produk' => $request->nama_produk,
+                'harga' => $request->harga,
+                'stok' => $request->stok,
+                'berat' => $request->berat,
+                'detail' => $request->detail,
+                'foto' => $namaFoto,
+                'status' => 1
+            ]);
+
+            return redirect()->route('backend.produk.index')
+                ->with('success', 'Produk berhasil ditambahkan');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /*

@@ -7,10 +7,21 @@
 
         <h5>Edit Produk</h5>
 
-        <form action="{{ route('backend.produk.update', $produk->id) }}" method="POST">
+        <form action="{{ route('backend.produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data">
 
             @csrf
             @method('PUT')
+
+            <div class="mb-3">
+                <label>Foto Produk</label>
+                <input type="file" name="foto" class="form-control">
+                @if ($produk->foto)
+                    <div class="mt-2">
+                        <small>Foto saat ini:</small>
+                        <img src="{{ asset('produk/'.$produk->foto) }}" class="img-thumbnail d-block mt-2" width="140">
+                    </div>
+                @endif
+            </div>
 
             <!-- NAMA PRODUK -->
             <input type="text" name="nama_produk"

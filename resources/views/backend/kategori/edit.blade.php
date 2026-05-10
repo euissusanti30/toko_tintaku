@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <form action="{{ route('backend.kategori.update', $edit->id) }}" method="post">
+                <form action="{{ route('backend.kategori.update', $kategori->id) }}" method="post">
                     @method('put')
                     @csrf
 
@@ -14,7 +14,7 @@
                         <h4 class="card-title"> {{$judul}} </h4>
                         <div class="form-group">
                             <label>Nama Kategori</label>
-                            <input type="text" name="nama_kategori" value="{{ old('nama_kategori', $edit->nama_kategori) }}" class="form-control @error('nama_kategori') is-invalid @enderror" placeholder="Masukkan Nama Kategori">
+                            <input type="text" name="nama_kategori" value="{{ old('nama_kategori', $kategori->nama_kategori) }}" class="form-control @error('nama_kategori') is-invalid @enderror" placeholder="Masukkan Nama Kategori">
                             @error('nama_kategori')
                             <span class="invalid-feedback alert-danger" role="alert">
                                 {{ $message }}

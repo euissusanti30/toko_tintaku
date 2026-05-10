@@ -28,12 +28,20 @@
         <!-- MENU -->
         <div class="d-flex gap-3 text-white">
 
-            <a href="/backend/dashboard" class="text-white text-decoration-none">
+            <a href="{{ route('backend.beranda') }}" class="text-white text-decoration-none">
                 Beranda
             </a>
 
-            <a href="/backend/user" class="text-white text-decoration-none">
-                User
+            <a href="{{ route('backend.kategori.index') }}" class="text-white text-decoration-none">
+                Kategori
+            </a>
+
+            <a href="{{ route('backend.produk.index') }}" class="text-white text-decoration-none">
+                Produk
+            </a>
+
+            <a href="{{ route('backend.transaksi.index') }}" class="text-white text-decoration-none">
+                Transaksi
             </a>
 
             <!-- LOGOUT -->
@@ -53,6 +61,33 @@
 
 <!-- CONTENT -->
 <div class="container py-5">
+
+    <!-- Success/Error Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> Please fix the following issues:<br>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     @yield('content')
 

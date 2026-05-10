@@ -1,47 +1,114 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Tintaku</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <h3 class="card-title">Admin Tintaku</h3>
+                            <p class="text-muted">Login to access admin panel</p>
+                        </div>
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+                        <!-- Session Status -->
+                        @if (session('status'))
+                            <div class="alert alert-info" role="alert">
+                                {{ session('status') }}
+                            </div>
+                        @endif
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('login') }}">
+                            @csrf
+
+                            <!-- Email Address -->
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" 
+                                       id="email" 
+                                       name="email" 
+                                       class="form-control @error('email') is-invalid @enderror" 
+                                       value="{{ old('email') }}" 
+                                       required 
+                                       autofocus 
+                                       autocomplete="username"
+                                       placeholder="admin@tintaku.com">
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" 
+                                       id="password" 
+                                       name="password" 
+                                       class="form-control @error('password') is-invalid @enderror" 
+                                       required 
+                                       autocomplete="current-password"
+                                       placeholder="password">
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" 
+                                           id="remember_me" 
+                                           name="remember" 
+                                           class="form-check-input">
+                                    <label for="remember_me" class="form-check-label">
+                                        Remember me
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    Login
+                                </button>
+                            </div>
+
+                            @if (Route::has('password.request'))
+                                <div class="text-center mt-3">
+                                    <a href="{{ route('password.request') }}" class="text-decoration-none">
+                                        Forgot your password?
+                                    </a>
+                                </div>
+                            @endif
+                        </form>
+
+                        <!-- Admin Credentials Info -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <small class="text-muted">
+                                <strong>Admin Credentials:</strong><br>
+                                Super Admin: admin@tintaku.com / password<br>
+                                Admin Staff: staff@tintaku.com / password
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ml-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    </div>
+</body>
+</html>

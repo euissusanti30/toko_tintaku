@@ -21,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // 🔥 BIAR $kategori BISA DIPAKAI DI SEMUA VIEW
-        view()->share('kategori', Kategori::all());
+//        view()->share('kategori', Kategori::all());
     }
 }

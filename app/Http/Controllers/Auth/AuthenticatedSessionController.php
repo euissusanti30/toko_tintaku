@@ -29,6 +29,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Check if user is admin and redirect to admin panel
+        if (auth()->user()->role == 0 || auth()->user()->role == 1) {
+            return redirect()->intended('/backend/beranda');
+        }
+
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\Kategori;
 
 class KategoriController extends Controller
@@ -31,7 +33,8 @@ class KategoriController extends Controller
         ]);
 
         Kategori::create([
-            'nama_kategori' => $request->nama_kategori
+            'nama_kategori' => $request->nama_kategori,
+            'slug' => $this->makeSlug($request->nama_kategori),
         ]);
 
         return redirect()->route('backend.kategori.index')
@@ -55,7 +58,8 @@ class KategoriController extends Controller
         ]);
 
         Kategori::where('id', $id)->update([
-            'nama_kategori' => $request->nama_kategori
+            'nama_kategori' => $request->nama_kategori,
+            'slug' => $this->makeSlug($request->nama_kategori, $id),
         ]);
 
         return redirect()->route('backend.kategori.index')
@@ -69,5 +73,21 @@ class KategoriController extends Controller
 
         return redirect()->route('backend.kategori.index')
             ->with('success', 'Kategori berhasil dihapus');
+    }
+
+    protected function makeSlug(string $nama, $ignoreId = null)
+    {
+        $slug = Str::slug($nama);
+        $base = $slug;
+        $count = 1;
+
+        while (Kategori::where('slug', $slug)
+            ->when($ignoreId, fn($query) => $query->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $count++;
+            $slug = $base.'-'.$count;
+        }
+
+        return $slug;
     }
 }

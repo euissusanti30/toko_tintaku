@@ -13,7 +13,14 @@
 
         <input type="text"
             name="nama_kategori"
-            class="form-control">
+            value="{{ old('nama_kategori') }}"
+            class="form-control @error('nama_kategori') is-invalid @enderror">
+
+        @error('nama_kategori')
+            <span class="invalid-feedback" role="alert">
+                {{ $message }}
+            </span>
+        @enderror
 
     </div>
 

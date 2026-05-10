@@ -48,7 +48,7 @@
 
                     </tr>
 
-                    @foreach($detail as $row)
+                    @foreach($transaksi->detailTransaksi as $row)
 
                     <tr>
 

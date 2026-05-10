@@ -16,4 +16,9 @@ class Transaksi extends Model
         'total_harga',
         'status'
     ];
+
+    public function detailTransaksi()
+    {
+        return $this->hasMany(DetailTransaksi::class, 'transaksi_id');
+    }
 }
