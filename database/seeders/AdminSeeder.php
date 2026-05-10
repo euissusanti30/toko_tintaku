@@ -12,19 +12,21 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Admin User
         \App\Models\User::create([
             'name' => 'Admin User',
             'nama' => 'Admin',
             'email' => 'admin@tintaku.com',
-            'role' => 1, // Super Admin
+            'role' => 1, // Admin
             'password' => \Hash::make('password'),
         ]);
 
+        // Regular User / Pembeli
         \App\Models\User::create([
-            'name' => 'Regular Admin',
-            'nama' => 'Admin Staff',
-            'email' => 'staff@tintaku.com',
-            'role' => 0, // Admin
+            'name' => 'Regular User',
+            'nama' => 'User Biasa',
+            'email' => 'user@tintaku.com',
+            'role' => 0, // Regular User
             'password' => \Hash::make('password'),
         ]);
     }

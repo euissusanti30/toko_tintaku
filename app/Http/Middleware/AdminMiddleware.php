@@ -15,10 +15,10 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && (auth()->user()->role == 0 || auth()->user()->role == 1)) {
+        if (auth()->check() && auth()->user()->role == 1) {
             return $next($request);
         }
 
-        return redirect('/login')->with('error', 'You do not have admin access.');
+        return redirect('/login')->with('error', 'Anda tidak memiliki akses admin.');
     }
 }
