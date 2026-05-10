@@ -72,26 +72,26 @@ class RajaOngkirService
             try {
                 // Buat HTTP GET request ke endpoint /province
                 // Header 'key' berisi API key untuk autentikasi
-                // Timeout 10 detik (jika lebih, dianggap gagal)
+                // Timeout 30 detik (increased untuk API yang lambat)
                 $response = Http::withHeaders([
                     'key' => $this->apiKey
-                ])->timeout(10)->get($this->baseUrl . '/province');
+                ])->timeout(30)->get($this->baseUrl . '/destination/province');
 
                 // Cek apakah response berhasil (status 200)
                 if ($response->successful()) {
                     // Ambil data dari response JSON
-                    // Struktur: rajaongkir -> results -> [data provinsi]
-                    return $response->json()['rajaongkir']['results'];
+                    // Struktur baru: data -> [data provinsi]
+                    return $response->json()['data'];
                 }
             } catch (\Exception $e) {
                 // Jika terjadi error (misal: timeout, API down), 
-                // log warning dan fallback ke demo mode
-                \Log::warning('RajaOngkir API failed, falling back to demo mode: ' . $e->getMessage());
+                // log error dan fallback ke mock data
+                \Log::warning('RajaOngkir API failed, using mock data: ' . $e->getMessage());
                 return $this->getMockProvinces();
             }
 
-            // Jika response tidak berhasil, return array kosong
-            return [];
+            // Jika response tidak berhasil, fallback ke mock data
+            return $this->getMockProvinces();
         });
     }
 
@@ -114,42 +114,51 @@ class RajaOngkirService
             return $this->getMockCities($provinceId);
         }
 
-        // Tentukan cache key berdasarkan apakah ada filter provinsi atau tidak
-        // Jika ada provinceId: cache key = "rajaongkir_cities_1" (contoh)
-        // Jika tidak ada: cache key = "rajaongkir_cities"
-        $cacheKey = $provinceId ? "rajaongkir_cities_{$provinceId}" : 'rajaongkir_cities';
-        
-        // Gunakan Cache untuk menyimpan data selama 3600 detik (1 jam)
-        // Cache key dinamis berdasarkan provinsi yang dipilih
-        return Cache::remember($cacheKey, 3600, function () use ($provinceId) {
-            try {
-                // Buat URL endpoint
-                // Base URL: /city
-                // Jika ada provinceId: /city?province={provinceId}
-                $url = $this->baseUrl . '/city';
-                if ($provinceId) {
-                    $url .= "?province={$provinceId}";
-                }
+        // API baru tidak support get all cities tanpa search parameter
+        // Return empty array - cities akan diambil via searchCities() method
+        \Log::info('getCities() called but API requires search parameter. Use searchCities() instead.');
+        return [];
+    }
 
-                // Buat HTTP GET request ke endpoint /city
-                // Header 'key' berisi API key untuk autentikasi
+    // ==========================================================================
+    // FUNGSI: SEARCH CITIES (Cari Kota/Kecamatan)
+    // ==========================================================================
+    // Parameter: $search - Query pencarian (nama kota/kecamatan)
+    //            $limit - Jumlah hasil maksimal (default: 20)
+    // Return: Array data kota/kecamatan dari API
+    //
+    // Digunakan untuk AJAX search di frontend saat user ketik nama kota
+
+    public function searchCities($search, $limit = 20)
+    {
+        // CEK: Jika dalam demo mode, return data dummy yang difilter
+        if ($this->demoMode) {
+            return $this->searchMockCities($search, $limit);
+        }
+
+        return Cache::remember('rajaongkir_search_' . md5($search), 3600, function () use ($search, $limit) {
+            try {
+                // API baru menggunakan endpoint /destination/domestic-destination dengan parameter search
+                $url = $this->baseUrl . '/destination/domestic-destination?search=' . urlencode($search) . '&limit=' . $limit;
+
+                \Log::info('Searching cities', ['search' => $search, 'url' => $url]);
+
                 $response = Http::withHeaders([
                     'key' => $this->apiKey
-                ])->timeout(10)->get($url);
+                ])->timeout(30)->get($url);
 
-                // Cek apakah response berhasil (status 200)
                 if ($response->successful()) {
-                    // Ambil data dari response JSON
-                    return $response->json()['rajaongkir']['results'];
+                    $data = $response->json()['data'] ?? [];
+                    \Log::info('Search cities result', ['count' => count($data)]);
+                    return $data;
                 }
-            } catch (\Exception $e) {
-                // Jika terjadi error, log warning dan fallback ke demo mode
-                \Log::warning('RajaOngkir API failed, falling back to demo mode: ' . $e->getMessage());
-                return $this->getMockCities($provinceId);
-            }
 
-            // Jika response tidak berhasil, return array kosong
-            return [];
+                \Log::warning('Search cities failed with status', ['status' => $response->status()]);
+                return $this->searchMockCities($search, $limit);
+            } catch (\Exception $e) {
+                \Log::warning('RajaOngkir search cities failed, using mock: ' . $e->getMessage());
+                return $this->searchMockCities($search, $limit);
+            }
         });
     }
 
@@ -175,27 +184,41 @@ class RajaOngkirService
             return $this->getMockShippingCost($courier, $weight);
         }
 
-        // Buat HTTP POST request ke endpoint /cost
-        // POST body berisi parameter ongkir yang diperlukan
-        $response = Http::withHeaders([
-            'key' => $this->apiKey
-        ])->post($this->baseUrl . '/cost', [
-            'origin' => $origin,              // ID kota asal
-            'originType' => 'city',             // Tipe asal: city (kota)
-            'destination' => $destination,    // ID kota tujuan
-            'destinationType' => 'city',        // Tipe tujuan: city (kota)
-            'weight' => $weight,              // Berat dalam gram
-            'courier' => $courier             // Kode kurir (jne/tiki/pos)
-        ]);
+        try {
+            // API baru menggunakan endpoint /calculate/district/domestic-cost
+            // Parameter: origin (district ID), destination (district ID), weight (gram), courier
+            $url = $this->baseUrl . '/calculate/district/domestic-cost';
 
-        // Cek apakah response berhasil
-        if ($response->successful()) {
-            // Ambil data hasil perhitungan ongkir dari response
-            return $response->json()['rajaongkir']['results'];
+            \Log::info('Calculating shipping cost', [
+                'origin' => $origin,
+                'destination' => $destination,
+                'weight' => $weight,
+                'courier' => $courier
+            ]);
+
+            $response = Http::withHeaders([
+                'key' => $this->apiKey,
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ])->timeout(30)->asForm()->post($url, [
+                'origin' => $origin,
+                'destination' => $destination,
+                'weight' => $weight,
+                'courier' => $courier,
+                'price' => 'lowest'
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'] ?? [];
+                \Log::info('Shipping cost result', ['count' => count($data)]);
+                return $data;
+            }
+
+            \Log::warning('Shipping cost failed, using mock', ['status' => $response->status()]);
+            return $this->getMockShippingCost($courier, $weight);
+        } catch (\Exception $e) {
+            \Log::warning('RajaOngkir shipping cost failed, using mock: ' . $e->getMessage());
+            return $this->getMockShippingCost($courier, $weight);
         }
-
-        // Jika gagal, return null
-        return null;
     }
 
     // ==========================================================================
@@ -213,16 +236,16 @@ class RajaOngkirService
     private function getMockProvinces()
     {
         return [
-            ['province_id' => 1, 'province' => 'Bali'],
-            ['province_id' => 2, 'province' => 'Jakarta'],
-            ['province_id' => 3, 'province' => 'Jawa Barat'],
-            ['province_id' => 4, 'province' => 'Jawa Tengah'],
-            ['province_id' => 5, 'province' => 'Jawa Timur'],
-            ['province_id' => 6, 'province' => 'Yogyakarta'],
-            ['province_id' => 7, 'province' => 'Sumatera Utara'],
-            ['province_id' => 8, 'province' => 'Sumatera Barat'],
-            ['province_id' => 9, 'province' => 'Sumatera Selatan'],
-            ['province_id' => 10, 'province' => 'Kalimantan'],
+            ['id' => 1, 'name' => 'Bali'],
+            ['id' => 2, 'name' => 'Jakarta'],
+            ['id' => 3, 'name' => 'Jawa Barat'],
+            ['id' => 4, 'name' => 'Jawa Tengah'],
+            ['id' => 5, 'name' => 'Jawa Timur'],
+            ['id' => 6, 'name' => 'Yogyakarta'],
+            ['id' => 7, 'name' => 'Sumatera Utara'],
+            ['id' => 8, 'name' => 'Sumatera Barat'],
+            ['id' => 9, 'name' => 'Sumatera Selatan'],
+            ['id' => 10, 'name' => 'Kalimantan'],
         ];
     }
 
@@ -236,26 +259,33 @@ class RajaOngkirService
     private function getMockCities($provinceId)
     {
         // Data kota dummy dengan relasi ke provinsi
-        // Struktur: city_id, province_id, city_name
+        // Struktur: id, province_id, city_name, label, province_name
+        // Province_id sesuai dengan API asli (DKI Jakarta=10, Bali=15, dll)
         $allCities = [
-            ['city_id' => 101, 'province_id' => 1, 'city_name' => 'Denpasar'], // Bali
-            ['city_id' => 102, 'province_id' => 1, 'city_name' => 'Badung'],
-            ['city_id' => 103, 'province_id' => 1, 'city_name' => 'Gianyar'],
-            ['city_id' => 152, 'province_id' => 2, 'city_name' => 'Jakarta Pusat'], // Jakarta
-            ['city_id' => 153, 'province_id' => 2, 'city_name' => 'Jakarta Utara'],
-            ['city_id' => 154, 'province_id' => 2, 'city_name' => 'Jakarta Selatan'],
-            ['city_id' => 155, 'province_id' => 2, 'city_name' => 'Jakarta Timur'],
-            ['city_id' => 156, 'province_id' => 2, 'city_name' => 'Jakarta Barat'],
-            ['city_id' => 201, 'province_id' => 3, 'city_name' => 'Bandung'], // Jawa Barat
-            ['city_id' => 202, 'province_id' => 3, 'city_name' => 'Bogor'],
-            ['city_id' => 203, 'province_id' => 3, 'city_name' => 'Bekasi'],
-            ['city_id' => 204, 'province_id' => 3, 'city_name' => 'Depok'],
-            ['city_id' => 301, 'province_id' => 4, 'city_name' => 'Semarang'], // Jawa Tengah
-            ['city_id' => 302, 'province_id' => 4, 'city_name' => 'Solo'],
-            ['city_id' => 303, 'province_id' => 4, 'city_name' => 'Yogyakarta'],
-            ['city_id' => 401, 'province_id' => 5, 'city_name' => 'Surabaya'], // Jawa Timur
-            ['city_id' => 402, 'province_id' => 5, 'city_name' => 'Malang'],
-            ['city_id' => 403, 'province_id' => 5, 'city_name' => 'Kediri'],
+            // Bali (ID: 15)
+            ['id' => 101, 'province_id' => 15, 'city_name' => 'Denpasar', 'label' => 'Denpasar, Bali', 'province_name' => 'BALI'],
+            ['id' => 102, 'province_id' => 15, 'city_name' => 'Badung', 'label' => 'Badung, Bali', 'province_name' => 'BALI'],
+            ['id' => 103, 'province_id' => 15, 'city_name' => 'Gianyar', 'label' => 'Gianyar, Bali', 'province_name' => 'BALI'],
+            // DKI Jakarta (ID: 10)
+            ['id' => 152, 'province_id' => 10, 'city_name' => 'Jakarta Pusat', 'label' => 'Jakarta Pusat, DKI Jakarta', 'province_name' => 'DKI JAKARTA'],
+            ['id' => 153, 'province_id' => 10, 'city_name' => 'Jakarta Utara', 'label' => 'Jakarta Utara, DKI Jakarta', 'province_name' => 'DKI JAKARTA'],
+            ['id' => 154, 'province_id' => 10, 'city_name' => 'Jakarta Selatan', 'label' => 'Jakarta Selatan, DKI Jakarta', 'province_name' => 'DKI JAKARTA'],
+            ['id' => 155, 'province_id' => 10, 'city_name' => 'Jakarta Timur', 'label' => 'Jakarta Timur, DKI Jakarta', 'province_name' => 'DKI JAKARTA'],
+            ['id' => 156, 'province_id' => 10, 'city_name' => 'Jakarta Barat', 'label' => 'Jakarta Barat, DKI Jakarta', 'province_name' => 'DKI JAKARTA'],
+            // Jawa Barat (ID: 5)
+            ['id' => 201, 'province_id' => 5, 'city_name' => 'Bandung', 'label' => 'Bandung, Jawa Barat', 'province_name' => 'JAWA BARAT'],
+            ['id' => 202, 'province_id' => 5, 'city_name' => 'Bogor', 'label' => 'Bogor, Jawa Barat', 'province_name' => 'JAWA BARAT'],
+            ['id' => 203, 'province_id' => 5, 'city_name' => 'Bekasi', 'label' => 'Bekasi, Jawa Barat', 'province_name' => 'JAWA BARAT'],
+            ['id' => 204, 'province_id' => 5, 'city_name' => 'Depok', 'label' => 'Depok, Jawa Barat', 'province_name' => 'JAWA BARAT'],
+            // Jawa Tengah (ID: 12)
+            ['id' => 301, 'province_id' => 12, 'city_name' => 'Semarang', 'label' => 'Semarang, Jawa Tengah', 'province_name' => 'JAWA TENGAH'],
+            ['id' => 302, 'province_id' => 12, 'city_name' => 'Solo', 'label' => 'Solo, Jawa Tengah', 'province_name' => 'JAWA TENGAH'],
+            // DI Yogyakarta (ID: 19)
+            ['id' => 303, 'province_id' => 19, 'city_name' => 'Yogyakarta', 'label' => 'Yogyakarta, DI Yogyakarta', 'province_name' => 'DI YOGYAKARTA'],
+            // Jawa Timur (ID: 18)
+            ['id' => 401, 'province_id' => 18, 'city_name' => 'Surabaya', 'label' => 'Surabaya, Jawa Timur', 'province_name' => 'JAWA TIMUR'],
+            ['id' => 402, 'province_id' => 18, 'city_name' => 'Malang', 'label' => 'Malang, Jawa Timur', 'province_name' => 'JAWA TIMUR'],
+            ['id' => 403, 'province_id' => 18, 'city_name' => 'Kediri', 'label' => 'Kediri, Jawa Timur', 'province_name' => 'JAWA TIMUR'],
         ];
 
         // Jika tidak ada filter provinsi, return semua kota
@@ -268,6 +298,26 @@ class RajaOngkirService
         return array_filter($allCities, function($city) use ($provinceId) {
             return $city['province_id'] == $provinceId;
         });
+    }
+
+    // --------------------------------------------------------------------------
+    // FUNGSI: SEARCH MOCK CITIES (Cari Kota Dummy)
+    // --------------------------------------------------------------------------
+    // Parameter: $search - Query pencarian
+    //            $limit - Jumlah hasil maksimal
+    // Return: Array data kota dummy yang cocok dengan pencarian
+
+    private function searchMockCities($search, $limit)
+    {
+        $allCities = $this->getMockCities(null);
+        $searchLower = strtolower($search);
+
+        $results = array_filter($allCities, function($city) use ($searchLower) {
+            return strpos(strtolower($city['city_name']), $searchLower) !== false ||
+                   strpos(strtolower($city['label']), $searchLower) !== false;
+        });
+
+        return array_slice(array_values($results), 0, $limit);
     }
 
     // --------------------------------------------------------------------------
@@ -291,7 +341,7 @@ class RajaOngkirService
                     'description' => 'Ongkos Kirim Ekonomis',
                     'cost' => [
                         [
-                            'value' => max(15000, $weight * 0.1),
+                            'value' => intval(max(15000, $weight * 0.1)),
                             'etd' => '2-3'
                         ]
                     ]
@@ -301,7 +351,7 @@ class RajaOngkirService
                     'description' => 'Layanan Reguler',
                     'cost' => [
                         [
-                            'value' => max(20000, $weight * 0.15),
+                            'value' => intval(max(20000, $weight * 0.15)),
                             'etd' => '1-2'
                         ]
                     ]
@@ -311,7 +361,7 @@ class RajaOngkirService
                     'description' => 'Yakin Esok Sampai',
                     'cost' => [
                         [
-                            'value' => max(30000, $weight * 0.2),
+                            'value' => intval(max(30000, $weight * 0.2)),
                             'etd' => '1'
                         ]
                     ]
@@ -323,7 +373,7 @@ class RajaOngkirService
                     'description' => 'Layanan Reguler',
                     'cost' => [
                         [
-                            'value' => max(18000, $weight * 0.12),
+                            'value' => intval(max(18000, $weight * 0.12)),
                             'etd' => '2-3'
                         ]
                     ]
@@ -333,7 +383,7 @@ class RajaOngkirService
                     'description' => 'Over Night Service',
                     'cost' => [
                         [
-                            'value' => max(25000, $weight * 0.18),
+                            'value' => intval(max(25000, $weight * 0.18)),
                             'etd' => '1'
                         ]
                     ]
@@ -345,7 +395,7 @@ class RajaOngkirService
                     'description' => 'Paket Kilat',
                     'cost' => [
                         [
-                            'value' => max(12000, $weight * 0.08),
+                            'value' => intval(max(12000, $weight * 0.08)),
                             'etd' => '3-4'
                         ]
                     ]
@@ -355,7 +405,7 @@ class RajaOngkirService
                     'description' => 'Express',
                     'cost' => [
                         [
-                            'value' => max(22000, $weight * 0.14),
+                            'value' => intval(max(22000, $weight * 0.14)),
                             'etd' => '1-2'
                         ]
                     ]
@@ -363,8 +413,10 @@ class RajaOngkirService
             ]
         ];
 
-        // Return format yang sama dengan response API RajaOngkir
-        // Jika kurir tidak ditemukan, return costs kosong (?? [])
+        \Log::info('Mock shipping cost', ['courier' => $courier, 'weight' => $weight, 'data' => $baseCost[$courier] ?? []]);
+
+        // Return format yang sama dengan response API RajaOngkir lama
+        // Struktur lama: array dengan object yang punya costs array
         return [
             [
                 'code' => strtoupper($courier),      // Kode kurir uppercase
@@ -436,20 +488,44 @@ class RajaOngkirService
     // --------------------------------------------------------------------------
     // Parameter: $provinceId - ID provinsi yang dicari
     // Return: String nama provinsi (contoh: "Bali") atau null jika tidak ditemukan
-    // Logic: Loop semua provinsi, cocokkan province_id, return province
-    
+    // Logic: Loop semua provinsi, cocokkan id, return name
+
     public function getProvinceName($provinceId)
     {
         // Ambil semua data provinsi
         $provinces = $this->getProvinces();
-        
+
         // Loop untuk mencari provinsi dengan ID yang cocok
         foreach ($provinces as $province) {
-            if ($province['province_id'] == $provinceId) {
-                return $province['province'];  // Return nama provinsi jika ketemu
+            if ($province['id'] == $provinceId) {
+                return $province['name'];  // Return nama provinsi jika ketemu
             }
         }
-        
+
+        // Return null jika provinsi tidak ditemukan
+        return null;
+    }
+
+    // --------------------------------------------------------------------------
+    // FUNGSI: GET PROVINCE ID FROM NAME (Ambil ID dari Nama Provinsi)
+    // --------------------------------------------------------------------------
+    // Parameter: $provinceName - Nama provinsi yang dicari
+    // Return: Integer ID provinsi atau null jika tidak ditemukan
+    // Logic: Loop semua provinsi, cocokkan name, return id
+
+    private function getProvinceIdFromName($provinceName)
+    {
+        // Ambil semua data provinsi
+        $provinces = $this->getProvinces();
+
+        // Loop untuk mencari provinsi dengan nama yang cocok
+        foreach ($provinces as $province) {
+            // Case-insensitive comparison untuk fleksibilitas
+            if (strcasecmp($province['name'], $provinceName) === 0) {
+                return $province['id'];
+            }
+        }
+
         // Return null jika provinsi tidak ditemukan
         return null;
     }

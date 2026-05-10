@@ -19,6 +19,6 @@ class AdminMiddleware
             return $next($request);
         }
 
-        return redirect('/login')->with('error', 'Anda tidak memiliki akses admin.');
+        return redirect('/home')->with('error', 'Anda tidak memiliki akses admin.');
     }
 }

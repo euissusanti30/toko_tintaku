@@ -25,6 +25,56 @@ SECTION UTAMA: Form Checkout
 - Card dengan shadow dan rounded corners
 - Layout 2 kolom: main content (lg-8) dan bisa ditambahkan sidebar
 --}}
+<style>
+    /* Autocomplete dropdown styles */
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+        float: left;
+        min-width: 100%;
+        padding: 0.5rem 0;
+        margin: 0.125rem 0 0;
+        font-size: 0.875rem;
+        color: #212529;
+        text-align: left;
+        list-style: none;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+    }
+    .dropdown-item {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-align: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+    .dropdown-item:hover,
+    .dropdown-item:focus {
+        color: #1e2125;
+        background-color: #e9ecef;
+    }
+    .dropdown-item:active {
+        color: #fff;
+        background-color: #0d6efd;
+    }
+    .position-relative {
+        position: relative;
+    }
+</style>
+
 <section class="py-5">
 
     <div class="container">
@@ -138,44 +188,45 @@ SECTION UTAMA: Form Checkout
                             - Kota: awalnya hidden, muncul setelah provinsi dipilih
                             --}}
                             <h5 class="mb-3 mt-4">Informasi Pengiriman</h5>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="province_id" class="form-label">Provinsi</label>
-                                        <select id="province_id" name="province_id" class="form-control" required>
-                                            <option value="">Pilih Provinsi</option>
-                                            @foreach($provinces as $province)
-                                                <option value="{{ $province['province_id'] }}">
-                                                    {{ $province['province'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+
+                            {{-- CARI KOTA/KECAMATAN ASAL (TOKO) --}}
+                            <div class="mb-3 position-relative">
+                                <label for="origin_search" class="form-label">Kota/Kecamatan Asal (Toko)</label>
+                                <input type="text"
+                                       id="origin_search"
+                                       name="origin_search"
+                                       class="form-control"
+                                       placeholder="Ketik 'matraman' atau 'jakarta pusat'..."
+                                       autocomplete="off"
+                                       required>
+                                <input type="hidden" id="origin_id" name="origin_id">
+
+                                {{-- Autocomplete dropdown for origin --}}
+                                <div id="origin_autocomplete"
+                                     class="dropdown-menu w-100"
+                                     style="display: none; max-height: 300px; overflow-y: auto;">
                                 </div>
-                                {{-- 
-                                KOLOM KOTA/KABUPATEN
-                                - Awalnya disabled (user harus pilih provinsi dulu)
-                                - Semua kota di-render tapi hidden dengan CSS
-                                - JavaScript akan menampilkan kota yang sesuai provinsi
-                                --}}
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="city_id" class="form-label">Kota/Kabupaten</label>
-                                        {{-- Disabled: akan di-enable via JavaScript setelah provinsi dipilih --}}
-                                        <select id="city_id" name="city_id" class="form-control" required disabled>
-                                            <option value="">Pilih Kota</option>
-                                            {{-- Loop semua kota, simpan province_id di data-province untuk filtering JS --}}
-                                            @foreach($cities as $city)
-                                                <option value="{{ $city['city_id'] }}" 
-                                                        data-province="{{ $city['province_id'] }}"
-                                                        style="display: none;"> {{-- Hidden by default --}}
-                                                    {{ $city['city_name'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                <small class="text-muted">Ketik minimal 3 huruf untuk mencari lokasi toko</small>
+                            </div>
+
+                            {{-- CARI KOTA/KECAMATAN TUJUAN --}}
+                            <div class="mb-3 position-relative">
+                                <label for="destination_search" class="form-label">Kota/Kecamatan Tujuan</label>
+                                <input type="text"
+                                       id="destination_search"
+                                       name="destination_search"
+                                       class="form-control"
+                                       placeholder="Ketik nama kota tujuan..."
+                                       autocomplete="off"
+                                       required>
+                                <input type="hidden" id="city_id" name="city_id">
+
+                                {{-- Autocomplete dropdown for destination --}}
+                                <div id="destination_autocomplete"
+                                     class="dropdown-menu w-100"
+                                     style="display: none; max-height: 300px; overflow-y: auto;">
                                 </div>
+                                <small class="text-muted">Ketik minimal 3 huruf untuk mencari lokasi tujuan</small>
                             </div>
 
                             {{-- 
@@ -407,71 +458,159 @@ document.addEventListener('DOMContentLoaded', function() {
     
     {{-- Debug: log element reference --}}
     console.log('Checkout form loaded');
-    console.log('Province select:', document.getElementById('province_id'));
-    console.log('City select:', document.getElementById('city_id'));
-    console.log('City select initial disabled state:', document.getElementById('city_id').disabled);
-    
-    {{-- Attach change event listener ke dropdown provinsi --}}
-    document.getElementById('province_id').addEventListener('change', function() {
-        const provinceId = this.value;  // ID provinsi yang dipilih
-        const citySelect = document.getElementById('city_id');  // Reference dropdown kota
-        
-        {{-- Debug: log perubahan provinsi --}}
-        console.log('Province changed to:', provinceId);
-        
-        // CEK: Jika user sudah memilih provinsi (bukan empty value)
-        if (provinceId) {
-            // Show cities for selected province
-            const cityOptions = citySelect.querySelectorAll('option');
-            cityOptions.forEach(option => {
-                // Ambil data-province attribute dari option
-                const optionProvinceId = option.getAttribute('data-province');
-                
-                // Bandingkan provinsi option dengan provinsi yang dipilih
-                // String() conversion untuk memastikan perbandingan string
-                if (optionProvinceId && String(optionProvinceId) === String(provinceId)) {
-                    option.style.display = 'block';  // Tampilkan option
-                    console.log('Showing city option:', option.textContent);
-                } else if (optionProvinceId) {
-                    option.style.display = 'none';   // Sembunyikan option
+
+    // -------------------------------------------------------------------------
+    // AUTOCOMPLETE SEARCH FOR ORIGIN AND DESTINATION
+    // -------------------------------------------------------------------------
+    const originSearch = document.getElementById('origin_search');
+    const originAutocomplete = document.getElementById('origin_autocomplete');
+    const originIdInput = document.getElementById('origin_id');
+
+    const destinationSearch = document.getElementById('destination_search');
+    const destinationAutocomplete = document.getElementById('destination_autocomplete');
+    const cityIdInput = document.getElementById('city_id');
+
+    let originTimeout = null;
+    let destinationTimeout = null;
+
+    // Function: Setup autocomplete for an input
+    function setupAutocomplete(input, autocomplete, hiddenInput, name) {
+        input.addEventListener('input', function() {
+            const query = this.value.trim();
+            console.log(name + ' search input:', query);
+
+            // Clear previous timeout
+            if (name === 'Origin' && originTimeout) {
+                clearTimeout(originTimeout);
+            } else if (name === 'Destination' && destinationTimeout) {
+                clearTimeout(destinationTimeout);
+            }
+
+            // Reset if empty
+            if (query.length === 0) {
+                hiddenInput.value = '';
+                autocomplete.style.display = 'none';
+                resetShipping();
+                return;
+            }
+
+            // Minimum 3 characters
+            if (query.length < 3) {
+                autocomplete.style.display = 'none';
+                return;
+            }
+
+            // Debounce 500ms
+            const timeout = setTimeout(() => {
+                searchCities(query, autocomplete, hiddenInput, input, name);
+            }, 500);
+
+            if (name === 'Origin') {
+                originTimeout = timeout;
+            } else {
+                destinationTimeout = timeout;
+            }
+        });
+
+        // Hide autocomplete on click outside
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !autocomplete.contains(e.target)) {
+                autocomplete.style.display = 'none';
+            }
+        });
+    }
+
+    // Setup autocomplete for both inputs
+    setupAutocomplete(originSearch, originAutocomplete, originIdInput, 'Origin');
+    setupAutocomplete(destinationSearch, destinationAutocomplete, cityIdInput, 'Destination');
+
+    // Function: Search cities
+    function searchCities(query, autocomplete, hiddenInput, input, name) {
+        console.log('Searching ' + name + ' for:', query);
+
+        fetch(`{{ url('/api/cities-search') }}?search=${encodeURIComponent(query)}&limit=20`, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    throw new Error('Non-JSON response');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(name + ' search results:', data);
+            displayAutocomplete(data || [], autocomplete, hiddenInput, input, name);
+        })
+        .catch(error => {
+            console.error(name + ' search error:', error);
+        });
+    }
+
+    // Function: Display autocomplete results
+    function displayAutocomplete(cities, autocomplete, hiddenInput, input, name) {
+        console.log('Displaying ' + cities.length + ' results for ' + name);
+        console.log('First result:', cities[0]);
+
+        if (!cities || cities.length === 0) {
+            autocomplete.innerHTML = '<div class="dropdown-item text-muted">Tidak ditemukan</div>';
+            autocomplete.style.display = 'block';
+            console.log('No results to display');
+            return;
+        }
+
+        let html = '';
+        cities.forEach((city, index) => {
+            const cityName = city.city_name || 'Unknown';
+            const districtName = city.district_name || '-';
+            const subdistrictName = city.subdistrict_name || '-';
+            const provinceName = city.province_name || '-';
+            const zipCode = city.zip_code || '';
+            const label = city.label || `${subdistrictName}, ${districtName}, ${cityName}, ${provinceName}`;
+
+            console.log('Result ' + index + ':', { id: city.id, cityName, label });
+
+            html += `
+                <a href="#" class="dropdown-item" data-city-id="${city.id}" data-label="${label.replace(/"/g, '&quot;')}">
+                    <div><strong>${cityName}</strong> <small class="text-muted">${zipCode}</small></div>
+                    <small class="text-muted">${label}</small>
+                </a>
+            `;
+        });
+
+        console.log('Setting HTML with ' + cities.length + ' items');
+        autocomplete.innerHTML = html;
+        autocomplete.style.display = 'block';
+        console.log('Autocomplete displayed for ' + name);
+
+        // Attach click events
+        autocomplete.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const cityId = this.getAttribute('data-city-id');
+                const label = this.getAttribute('data-label');
+
+                input.value = label;
+                hiddenInput.value = cityId;
+                autocomplete.style.display = 'none';
+
+                console.log(name + ' selected:', cityId, label);
+                resetShipping();
+
+                // Calculate shipping if both origin and destination are selected
+                if (originIdInput.value && cityIdInput.value) {
+                    loadShippingCost();
                 }
             });
-            
-            // Enable city dropdown dan reset selection ke empty
-            citySelect.disabled = false;  // Hapus attribute disabled
-            citySelect.value = '';        // Reset ke "Pilih Kota"
-            console.log('City select enabled for province:', provinceId);
-        } else {
-            // Jika user reset provinsi ke empty
-            // Hide all cities and disable dropdown
-            const cityOptions = citySelect.querySelectorAll('option[data-province]');
-            cityOptions.forEach(option => {
-                option.style.display = 'none';  // Sembunyikan semua kota
-            });
-            
-            citySelect.disabled = true;   // Disable dropdown
-            citySelect.value = '';      // Reset value
-            console.log('City select disabled');
-        }
-        
-        // Reset shipping calculation setiap kali provinsi berubah
-        resetShipping();
-    });
-    
-    // -------------------------------------------------------------------------
-    // EVENT LISTENER: City Change Handler
-    // -------------------------------------------------------------------------
-    // Trigger: Saat user memilih kota dari dropdown
-    // Tujuan: Hitung ulang ongkir berdasarkan kota tujuan yang baru
-    
-    document.getElementById('city_id').addEventListener('change', function() {
-        resetShipping();  // Reset dulu sebelum hitung baru
-        
-        // Jika user sudah memilih kota (bukan empty), hitung ongkir
-        if (this.value) {
-            loadShippingCost();
-        }
-    });
+        });
+    }
     
     // -------------------------------------------------------------------------
     // EVENT LISTENER: Courier Change Handler
@@ -481,8 +620,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.querySelectorAll('input[name="courier"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            // Hanya hitung jika kota sudah dipilih
-            if (document.getElementById('city_id').value) {
+            // Hanya hitung jika destination sudah dipilih (origin selalu set)
+            if (cityIdInput.value) {
                 loadShippingCost();
             }
         });
@@ -533,16 +672,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function loadShippingCost() {
         // Ambil value dari form
+        const originId = document.getElementById('origin_id').value;
         const cityId = document.getElementById('city_id').value;
         const courier = document.querySelector('input[name="courier"]:checked').value;
         const weight = totalWeight;
-        
-        // Default origin: Jakarta Pusat (ID: 152)
-        // Asumsi toko/pengirim berada di Jakarta
-        const originCity = 152;
-        
+
+        console.log('Shipping cost params:', { originId, cityId, courier, weight });
+
         // Validasi: Pastikan semua parameter ada sebelum request
-        if (!cityId || !courier || !weight) return;
+        if (!originId || !cityId || !courier || !weight) {
+            console.log('Missing required params, skipping shipping cost');
+            return;
+        }
         
         // AJAX Request menggunakan Fetch API
         fetch('{{ url('/api/shipping-cost') }}', {
@@ -552,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')  // Token CSRF Laravel
             },
             body: JSON.stringify({  // Data yang dikirim ke server
-                origin: originCity,
+                origin: originId,
                 destination: cityId,
                 weight: weight,
                 courier: courier
@@ -560,10 +701,29 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())  // Parse response sebagai JSON
         .then(data => {
+            console.log('Shipping cost response:', data);
+            console.log('Data type:', typeof data);
+            console.log('Is array:', Array.isArray(data));
+            console.log('Data keys:', data ? Object.keys(data) : 'null');
+
             // Cek jika ada data hasil
             if (data && data.length > 0) {
-                // Tampilkan layanan yang tersedia (ambil data pertama)
-                displayShippingServices(data[0]);
+                // API lama: array dengan courier object (memiliki costs array)
+                console.log('Using old API structure (array with courier objects)');
+                displayShippingServices(data[0]); // Ambil courier pertama
+            } else if (data && data.code) {
+                // Single courier response (API lama dengan satu kurir)
+                console.log('Using single courier structure');
+                displayShippingServices(data);
+            } else if (data && data.results && Array.isArray(data.results)) {
+                // Response wrapped in results key (from logging format)
+                console.log('Using results-wrapped structure');
+                if (data.results.length > 0) {
+                    displayShippingServices(data.results[0]);
+                }
+            } else {
+                console.error('No shipping data found:', data);
+                document.getElementById('shipping-services').innerHTML = '<p class="text-danger">Gagal memuat ongkir. Data: ' + JSON.stringify(data) + '</p>';
             }
         })
         .catch(error => {
@@ -586,53 +746,117 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function displayShippingServices(courierData) {
         const servicesDiv = document.getElementById('shipping-services');
+
+        console.log('Courier data received:', courierData);
+        console.log('Type of courierData:', typeof courierData);
+        console.log('Is array?', Array.isArray(courierData));
+
+        // Cek jika data kosong atau undefined
+        if (!courierData) {
+            console.error('Courier data is null or undefined');
+            servicesDiv.innerHTML = '<p class="text-danger">Gagal memuat layanan pengiriman</p>';
+            return;
+        }
+
         let html = '';
-        
-        // Loop setiap layanan yang tersedia dari kurir
-        // Contoh: OKE, REG, YES untuk JNE
-        courierData.costs.forEach((service, index) => {
-            // Buat ID unik untuk radio button (kurir-layanan, contoh: jne-REG)
-            const serviceId = `${courierData.code}-${service.service}`;
-            
+
+        // Cek struktur data API baru vs lama
+        // API baru: Array langsung dengan field cost, service, description, etd
+        // API lama: Object dengan costs array
+        let services = [];
+        if (courierData.costs && Array.isArray(courierData.costs)) {
+            // Struktur lama
+            console.log('Using old API structure (costs array)');
+            services = courierData.costs;
+        } else if (Array.isArray(courierData)) {
+            // Struktur baru: Array of services
+            console.log('Using new API structure (flat array)');
+            services = courierData;
+        } else {
+            console.error('Unknown courier data structure:', courierData);
+            servicesDiv.innerHTML = '<p class="text-danger">Gagal memuat layanan pengiriman</p>';
+            return;
+        }
+
+        console.log('Services to display:', services);
+
+        // Loop setiap layanan yang tersedia
+        services.forEach((service, index) => {
+            console.log('Processing service:', service);
+
+            // Buat ID unik untuk radio button
+            const serviceId = `service-${index}`;
+
+            // Extract cost dengan benar - support struktur lama dan baru
+            let cost = 0;
+            if (service.cost && Array.isArray(service.cost) && service.cost.length > 0) {
+                // Struktur lama: cost adalah array dengan object {value, etd}
+                cost = parseInt(service.cost[0].value) || 0;
+            } else if (typeof service.cost === 'number') {
+                // Struktur baru: cost langsung number
+                cost = service.cost;
+            } else if (service.cost) {
+                // Fallback
+                cost = parseInt(service.cost) || 0;
+            }
+
+            const serviceName = service.service || service.name || 'Layanan';
+            const description = service.description || '';
+            let etd = '-';
+            if (service.cost && Array.isArray(service.cost) && service.cost.length > 0) {
+                etd = service.cost[0].etd || '-';
+            } else if (service.etd) {
+                etd = service.etd;
+            }
+            const courierCode = service.code || 'courier';
+
+            console.log('Service parsed:', { serviceId, cost, serviceName, description, etd });
+
             // Build HTML untuk satu pilihan layanan
             html += `
                 <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="shipping_option" 
-                           id="${serviceId}" value="${service.cost[0].value}" 
-                           data-service="${service.service}">
+                    <input class="form-check-input" type="radio" name="shipping_option"
+                           id="${serviceId}" value="${cost}"
+                           data-service="${serviceName}">
                     <label class="form-check-label" for="${serviceId}">
-                        <strong>${service.service}</strong> - ${service.description} 
-                        <span class="float-end">Rp ${service.cost[0].value.toLocaleString('id-ID')}</span>
-                        <br><small class="text-muted">Estimasi: ${service.cost[0].etd} hari</small>
+                        <strong>${serviceName}</strong> ${description ? '- ' + description : ''}
+                        <span class="float-end">Rp ${cost.toLocaleString('id-ID')}</span>
+                        <br><small class="text-muted">Estimasi: ${etd}</small>
                     </label>
                 </div>
             `;
         });
-        
+
         // Render HTML ke div
         servicesDiv.innerHTML = html;
-        
+
         // -------------------------------------------------------------------------
         // EVENT LISTENER: Shipping Option Selection
         // -------------------------------------------------------------------------
         // Trigger: Saat user memilih salah satu layanan pengiriman
         // Tujuan: Update form dengan data layanan yang dipilih dan hitung total
-        
-        servicesDiv.querySelectorAll('input[name="shipping_option"]').forEach(radio => {
+
+        const radioButtons = servicesDiv.querySelectorAll('input[name="shipping_option"]');
+        console.log('Radio buttons found:', radioButtons.length);
+
+        radioButtons.forEach(radio => {
             radio.addEventListener('change', function() {
-                // Update hidden field dengan nama layanan (OKE/REG/YES)
+                // Update hidden field dengan nama layanan
                 document.getElementById('shipping_service').value = this.dataset.service;
-                
+
+                // Parse cost dengan fallback ke 0 jika NaN
+                const shippingCost = parseInt(this.value) || 0;
+
                 // Update hidden field dengan biaya ongkir
-                document.getElementById('shipping_cost').value = this.value;
-                
+                document.getElementById('shipping_cost').value = shippingCost;
+
                 // Update tampilan ongkir dengan format Rupiah
-                document.getElementById('shipping-display').textContent = 'Rp ' + parseInt(this.value).toLocaleString('id-ID');
-                
+                document.getElementById('shipping-display').textContent = 'Rp ' + shippingCost.toLocaleString('id-ID');
+
                 // Hitung total keseluruhan (subtotal + ongkir)
-                const total = subtotal + parseInt(this.value);
+                const total = subtotal + shippingCost;
                 document.getElementById('total').innerHTML = '<strong>Rp ' + total.toLocaleString('id-ID') + '</strong>';
-                
+
                 // Enable tombol submit (semua data sudah lengkap)
                 document.getElementById('submit-btn').disabled = false;
             });

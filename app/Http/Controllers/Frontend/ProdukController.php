@@ -434,11 +434,12 @@ class ProdukController extends Controller
             'email' => 'required|email|max:255',               // Email valid
             'telepon' => 'required|string|max:15',            // No telepon
             'alamat' => 'required|string',                    // Alamat pengiriman
-            'province_id' => 'required|integer',              // ID provinsi
-            'city_id' => 'required|integer',                  // ID kota
+            'origin_id' => 'required|integer',                 // ID kota asal (hidden field)
+            'city_id' => 'required|integer',                  // ID kota tujuan
             'courier' => 'required|string',                   // Kode kurir (jne/tiki/pos)
             'shipping_service' => 'required|string',          // Layanan kurir (OKE/REG/YES)
-            'shipping_cost' => 'required|integer|min:0'        // Biaya ongkir (angka, min 0)
+            'shipping_cost' => 'required|integer|min:0',       // Biaya ongkir (angka, min 0)
+            'weight' => 'required|integer|min:1'              // Total berat dalam gram
         ]);
 
         // =========================================================================
@@ -553,13 +554,53 @@ class ProdukController extends Controller
     {
         // Buat instance service RajaOngkir
         $rajaOngkir = new RajaOngkirService();
-        
+
         // Ambil data kota berdasarkan provinsi dari service
         $cities = $rajaOngkir->getCities($provinceId);
-        
+
         // Return response dalam format JSON
         // Format JSON cocok untuk AJAX/JavaScript consumption
         return response()->json($cities);
+    }
+
+    // -------------------------------------------------------------------------
+    // API: searchCities() - Cari Kota (JSON)
+    // -------------------------------------------------------------------------
+    // URL: /api/cities-search?search={query}&limit={limit}
+    // Parameter dari Request:
+    //   search - Query pencarian nama kota/kecamatan (wajib)
+    //   limit  - Jumlah hasil maksimal (opsional, default: 20)
+    // Return: JSON array data kota/kecamatan dari API RajaOngkir
+    //
+    // Digunakan oleh: JavaScript frontend untuk autocomplete saat user ketik alamat
+    // Hasil: Dropdown autocomplete muncul dengan data real dari API
+
+    public function searchCities(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'search' => 'required|string|min:2',  // Minimal 2 karakter untuk pencarian
+            'limit' => 'integer|min:1|max:100'     // Limit antara 1-100 hasil
+        ]);
+
+        // Buat instance service RajaOngkir
+        $rajaOngkir = new RajaOngkirService();
+
+        // Ambil parameter dari request
+        $search = $request->get('search');
+        $limit = $request->get('limit', 20);
+
+        // Log untuk debugging
+        \Log::info('Search cities request', ['search' => $search, 'limit' => $limit]);
+
+        // Panggil method searchCities dari service
+        $results = $rajaOngkir->searchCities($search, $limit);
+
+        // Log hasil
+        \Log::info('Search cities response', ['count' => count($results)]);
+
+        // Return dalam format JSON
+        return response()->json($results);
     }
 
     // -------------------------------------------------------------------------
@@ -588,7 +629,15 @@ class ProdukController extends Controller
 
         // Buat instance service RajaOngkir
         $rajaOngkir = new RajaOngkirService();
-        
+
+        // Log request parameters untuk debugging
+        \Log::info('Shipping cost request', [
+            'origin' => $request->origin,
+            'destination' => $request->destination,
+            'weight' => $request->weight,
+            'courier' => $request->courier
+        ]);
+
         // Panggil method getShippingCost dari service
         // Kirim parameter dari request untuk hitung ongkir
         $results = $rajaOngkir->getShippingCost(
@@ -597,6 +646,9 @@ class ProdukController extends Controller
             $request->weight,      // Berat dalam gram
             $request->courier      // Kode kurir
         );
+
+        // Log response untuk debugging
+        \Log::info('Shipping cost response', ['results' => $results]);
 
         // Return hasil perhitungan dalam format JSON
         return response()->json($results);

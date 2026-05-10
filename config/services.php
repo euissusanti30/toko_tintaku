@@ -33,10 +33,8 @@ return [
 
     'rajaongkir' => [
         'api_key' => env('RAJAONGKIR_API_KEY'),
-        'base_url' => env('RAJAONGKIR_ACCOUNT_TYPE', 'starter') === 'pro' 
-            ? 'https://pro.rajaongkir.com/api' 
-            : 'https://api.rajaongkir.com/starter',
-        'demo_mode' => env('RAJAONGKIR_DEMO_MODE', true),
+        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://api.rajaongkir.com/starter'),
+        'demo_mode' => env('RAJAONGKIR_DEMO_MODE', false),
     ],
 
 ];

@@ -20,6 +20,7 @@ use App\Http\Controllers\Backend\ProdukController as BackendProdukController;
 use App\Http\Controllers\Backend\KategoriController;
 use App\Http\Controllers\Backend\BerandaController;
 use App\Http\Controllers\Backend\TransaksiController;
+use App\Http\Controllers\Backend\UserCustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,24 +35,19 @@ Route::get('/dashboard', function () {
     return redirect('/home');
 })->middleware('auth')->name('dashboard');
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect('/dashboard');
-    }
-    return redirect('/login');
-});
+Route::get('/', [FrontendProdukController::class, 'frontend'])->name('home');
 
-Route::get('/home', [FrontendProdukController::class, 'frontend'])->name('home')->middleware('auth');
+Route::get('/home', [FrontendProdukController::class, 'frontend'])->name('home.page');
 
-Route::get('/shop', [FrontendProdukController::class, 'shop'])->name('shop')->middleware('auth');
+Route::get('/shop', [FrontendProdukController::class, 'shop'])->name('shop');
 
-Route::get('/detail/{id}', [FrontendProdukController::class, 'detail'])->name('detail')->middleware('auth');
+Route::get('/detail/{id}', [FrontendProdukController::class, 'detail'])->name('detail');
 
-Route::get('/kategori/{id}', [FrontendProdukController::class, 'kategori'])->name('kategori')->middleware('auth');
+Route::get('/kategori/{id}', [FrontendProdukController::class, 'kategori'])->name('kategori');
 
 Route::get('/contact', function () {
     return view('v_contact.index');
-})->middleware('auth');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -59,25 +55,55 @@ Route::get('/contact', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
-    Route::get('/cart', [FrontendProdukController::class, 'cart']);
+Route::get('/cart', [FrontendProdukController::class, 'cart']);
 
-    Route::get('/add-cart/{id}', [FrontendProdukController::class, 'addCart']);
+Route::get('/add-cart/{id}', [FrontendProdukController::class, 'addCart']);
 
-    Route::post('/update-cart', [FrontendProdukController::class, 'updateCart']);
+Route::post('/update-cart', [FrontendProdukController::class, 'updateCart']);
 
-    Route::get('/delete-cart/{id}', [FrontendProdukController::class, 'deleteCart']);
+Route::get('/delete-cart/{id}', [FrontendProdukController::class, 'deleteCart']);
 
-    Route::get('/checkout', [FrontendProdukController::class, 'checkout']);
+Route::get('/checkout', [FrontendProdukController::class, 'checkout']);
 
-    Route::post('/checkout-store', [FrontendProdukController::class, 'checkoutStore'])->name('frontend.checkout.store');
+Route::post('/checkout-store', [FrontendProdukController::class, 'checkoutStore'])->name('frontend.checkout.store');
 
-    Route::get('/invoice/{id}', [FrontendProdukController::class, 'invoice']);
-});
+Route::get('/invoice/{id}', [FrontendProdukController::class, 'invoice']);
 
 // API Routes for Raja Ongkir
-Route::get('/api/cities/{provinceId}', [FrontendProdukController::class, 'getCities'])->middleware('auth');
-Route::post('/api/shipping-cost', [FrontendProdukController::class, 'getShippingCost'])->middleware('auth');
+Route::get('/api/cities/{provinceId}', [FrontendProdukController::class, 'getCities']);
+Route::get('/api/cities-search', [FrontendProdukController::class, 'searchCities']);
+Route::post('/api/shipping-cost', [FrontendProdukController::class, 'getShippingCost']);
+
+// Backend Login Route
+Route::get('/loginbackend', function () {
+    return view('auth.login');
+})->name('backend.login');
+
+Route::post('/loginbackend', function (Request $request) {
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        
+        // Check if user is admin (role = 1)
+        if (Auth::user()->role == 1) {
+            return redirect('/backend/beranda');
+        }
+        
+        // If not admin, logout and redirect back with error
+        Auth::logout();
+        return back()->withErrors([
+            'email' => 'Access denied. Admin access only.',
+        ]);
+    }
+
+    return back()->withErrors([
+        'email' => 'The provided credentials do not match our records.',
+    ]);
+})->name('backend.login.submit');
 
 Route::get('/logout', function (Request $request) {
     Auth::logout();
@@ -85,8 +111,8 @@ Route::get('/logout', function (Request $request) {
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
-    return redirect('/login');
-})->middleware('auth');
+    return redirect('/home');
+});
 
 Route::prefix('backend')
     ->name('backend.')
@@ -106,6 +132,9 @@ Route::prefix('backend')
         // CRUD Transaksi
         Route::resource('transaksi', TransaksiController::class)->only(['index', 'show', 'update', 'destroy']);
 
+        // CRUD User Customer
+        Route::resource('user-customer', UserCustomerController::class);
+
     });
 
 /*
@@ -122,6 +151,6 @@ Route::post('/backend/logout', function (Request $request) {
 
     $request->session()->regenerateToken();
 
-    return redirect('/login');
+    return redirect('/home');
 
 })->name('backend.logout');

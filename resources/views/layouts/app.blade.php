@@ -42,6 +42,7 @@
                     <a href="/shop" class="text-gray-700 hover:text-blue-500">Shop</a>
                     <a href="/cart" class="text-gray-700 hover:text-blue-500">Cart</a>
                     <a href="/checkout" class="text-gray-700 hover:text-blue-500">Checkout</a>
+                    <a href="/loginbackend" class="text-gray-700 hover:text-blue-500 font-semibold">Admin</a>
 
                 </div>
 
@@ -62,6 +63,7 @@
             <a href="/shop" class="block py-2">Shop</a>
             <a href="/cart" class="block py-2">Cart</a>
             <a href="/checkout" class="block py-2">Checkout</a>
+            <a href="/loginbackend" class="block py-2 font-semibold">Admin</a>
 
         </div>
 
