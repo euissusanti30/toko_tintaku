@@ -1,0 +1,838 @@
+/* ================= PROFESSIONAL HEADER ================= */
+
+.top-header {
+    position: relative;
+
+    padding: 22px 0;
+
+    overflow: hidden;
+
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.96),
+        rgba(245, 250, 252, 0.95)
+    );
+
+    backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.05);
+}
+/* BACKGROUND EFFECT */
+.top-header::before {
+    content: "";
+
+    position: absolute;
+
+    width: 500px;
+    height: 500px;
+
+    background: radial-gradient(rgba(64, 192, 206, 0.16), transparent 70%);
+
+    top: -250px;
+    left: -180px;
+
+    filter: blur(10px);
+}
+
+.top-header::after {
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    background: radial-gradient(rgba(64, 192, 206, 0.1), transparent 70%);
+
+    top: -180px;
+    right: -160px;
+
+    filter: blur(12px);
+}
+/* HEADER GLOW */
+
+.top-header::after,
+.top-header::before {
+    animation: glowMove 8s ease-in-out infinite alternate;
+}
+
+@keyframes glowMove {
+    from {
+        transform: translateY(0px);
+    }
+
+    to {
+        transform: translateY(12px);
+    }
+}
+/* DOT PATTERN */
+.top-header-pattern {
+    position: absolute;
+
+    inset: 0;
+
+    background-image: radial-gradient(
+        rgba(64, 192, 206, 0.12) 2px,
+        transparent 2px
+    );
+
+    background-size: 46px 46px;
+
+    opacity: 0.8;
+
+    z-index: 1;
+}
+
+/* CONTAINER */
+
+.top-header .container {
+    position: relative;
+
+    z-index: 2;
+}
+
+/* ================= BRAND ================= */
+
+.header-brand {
+    gap: 16px;
+}
+
+.logo {
+    width: 74px;
+    height: 74px;
+
+    object-fit: contain;
+
+    transition: 0.3s;
+}
+
+.logo:hover {
+    transform: scale(1.04);
+}
+
+.brand-name {
+    font-size: 54px;
+    font-weight: 800;
+
+    color: #40c0ce;
+
+    text-decoration: none;
+
+    line-height: 1;
+}
+
+.brand-subtitle {
+    color: #64748b;
+
+    font-size: 13px;
+
+    margin-top: 4px;
+}
+
+/* ================= SEARCH ================= */
+
+.header-search {
+    width: 42%;
+}
+
+.header-search form {
+    position: relative;
+}
+
+.header-search input {
+    width: 100%;
+
+    height: 56px;
+
+    border: none;
+
+    border-radius: 999px;
+
+    background: #f1f5f9;
+
+    padding: 0 65px 0 24px;
+
+    outline: none;
+
+    font-size: 15px;
+
+    transition: 0.3s;
+}
+
+.header-search input:focus {
+    background: white;
+
+    box-shadow: 0 0 0 4px rgba(64, 192, 206, 0.12);
+}
+
+.header-search button {
+    position: absolute;
+
+    right: 6px;
+    top: 6px;
+
+    width: 44px;
+    height: 44px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #40c0ce, #2daab8);
+
+    color: white;
+
+    transition: 0.3s;
+}
+
+.header-search button:hover {
+    transform: scale(1.05);
+}
+
+/* ================= ICON ================= */
+
+.top-icons {
+    gap: 18px;
+}
+
+/* CART */
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+
+    border-radius: 50%;
+
+    background: #f1f5f9;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    text-decoration: none;
+
+    color: #1e293b;
+
+    transition: 0.3s;
+}
+
+.header-icon i {
+    font-size: 20px;
+}
+
+.header-icon:hover {
+    background: #40c0ce;
+
+    transform: translateY(-3px);
+}
+
+.header-icon:hover i {
+    color: white;
+}
+
+.cart-badge {
+    position: absolute;
+
+    top: -4px;
+    right: -2px;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: #ef4444;
+
+    color: white;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ================= ACCOUNT BUTTON ================= */
+
+.account-btn {
+    height: 54px !important;
+    padding: 0 24px !important;
+    border-radius: 20px !important;
+    background: linear-gradient(135deg, #40c0ce, #2daab8) !important;
+    border: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: white !important;
+    font-size: 15px;
+    font-weight: 700;
+    transition: 0.3s ease;
+    outline: none !important;
+    box-shadow: 0 10px 20px rgba(64, 192, 206, 0.18);
+    min-width: 120px;
+}
+
+/* ICON */
+
+.account-btn i {
+    font-size: 17px;
+}
+
+/* ARROW */
+
+.account-btn::after {
+    margin-left: 2px;
+
+    border-top-color: white !important;
+}
+
+/* HOVER */
+
+.account-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow: 0 14px 28px rgba(64, 192, 206, 0.24);
+}
+
+/* FOCUS */
+
+.account-btn:focus {
+    box-shadow: 0 0 0 4px rgba(64, 192, 206, 0.18) !important;
+}
+/* ================= DROPDOWN ================= */
+
+.account-dropdown {
+    width: 270px;
+
+    margin-top: 10px !important;
+
+    border: none !important;
+
+    border-radius: 24px !important;
+
+    overflow: hidden;
+
+    background: white;
+
+    box-shadow:
+        0 20px 45px rgba(0, 0, 0, 0.12),
+        0 5px 15px rgba(0, 0, 0, 0.05);
+
+    animation: dropdownFade 0.25s ease;
+}
+
+/* HEADER */
+
+.account-header {
+    padding: 22px 24px 16px;
+}
+
+.account-header small {
+    color: #94a3b8;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+}
+
+.account-header h6 {
+    margin-top: 6px;
+    margin-bottom: 0;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    color: #1e293b;
+}
+
+/* ITEM */
+
+.account-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px 24px;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #334155;
+
+    transition: 0.25s;
+}
+
+.account-dropdown .dropdown-item i {
+    color: #40c0ce;
+
+    font-size: 16px;
+}
+
+.account-dropdown .dropdown-item:hover {
+    background: #f8fafc;
+
+    color: #40c0ce;
+
+    padding-left: 30px;
+}
+
+/* DIVIDER */
+
+.account-dropdown .dropdown-divider {
+    margin: 0;
+
+    border-color: #eef2f7;
+}
+
+/* ANIMATION */
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 992px) {
+    .header-search {
+        display: none;
+    }
+
+    .brand-name {
+        font-size: 42px;
+    }
+}
+
+@media (max-width: 576px) {
+    .logo {
+        width: 58px;
+        height: 58px;
+    }
+
+    .brand-name {
+        font-size: 34px;
+    }
+
+    .brand-subtitle {
+        font-size: 11px;
+    }
+
+    .header-account span {
+        display: none;
+    }
+
+    .header-account {
+        width: 50px;
+
+        justify-content: center;
+
+        padding: 0;
+    }
+}
+/* ================= FIX DROPDOWN ================= */
+
+.dropdown {
+    position: relative !important;
+}
+
+.account-dropdown {
+    width: 270px;
+
+    position: absolute !important;
+
+    top: 60px !important;
+    right: auto !important;
+    left: 0 !important;
+
+    margin-top: 2px !important;
+
+    border: none !important;
+
+    border-radius: 24px !important;
+
+    overflow: hidden;
+
+    background: white;
+
+    box-shadow:
+        0 20px 45px rgba(0, 0, 0, 0.12),
+        0 5px 15px rgba(0, 0, 0, 0.05);
+
+    z-index: 999999 !important;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(10px) scale(0.96);
+
+    transform-origin: top right;
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease,
+        visibility 0.25s ease;
+}
+
+.dropdown-menu.show {
+    opacity: 1 !important;
+
+    visibility: visible !important;
+
+    transform: translateY(0) scale(1) !important;
+}
+/* FIX KETIMPA */
+
+.top-header,
+.top-header .container,
+.top-icons {
+    overflow: visible !important;
+}
+
+/* HEADER PALING DEPAN */
+
+.top-header {
+    position: relative;
+    z-index: 9999;
+}
+
+/* NAVBAR DI BELAKANG */
+
+.main-navbar {
+    background: linear-gradient(90deg, #03132f, #071b3d, #03132f) !important;
+
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* ANIMATION */
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* FIX HORIZONTAL SCROLL */
+
+html,
+body {
+    overflow-x: hidden !important;
+
+    width: 100%;
+}
+
+/* ================= ACCOUNT TEXT ================= */
+
+.account-text {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    line-height: 1.1;
+}
+
+.account-text small {
+    font-size: 10px;
+
+    color: rgba(255, 255, 255, 0.75);
+
+    font-weight: 500;
+
+    margin-bottom: 2px;
+}
+
+.account-text span {
+    font-size: 14px;
+
+    font-weight: 700;
+
+    color: white;
+
+    max-width: 120px;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+/* ================= USER INFO DROPDOWN ================= */
+
+.account-user-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 18px 20px 14px;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #40c0ce, #2daab8);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+
+    font-size: 18px;
+
+    flex-shrink: 0;
+}
+
+.user-detail h6 {
+    margin: 0;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: #1e293b;
+
+    max-width: 180px;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+.user-detail small {
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+/* LOGOUT */
+
+.logout-item {
+    display: flex !important;
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 14px 20px !important;
+
+    font-weight: 400;
+
+    font-size: 15px;
+
+    transition: 0.3s;
+}
+
+.logout-item i {
+    color: #40c0ce;
+}
+
+.logout-item:hover {
+    background: #f8fafc !important;
+
+    padding-left: 24px !important;
+}
+/* DELETE ACCOUNT */
+
+.delete-account-item {
+    width: 100%;
+
+    height: 50px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 0 22px;
+
+    border: none !important;
+
+    outline: none !important;
+
+    background: transparent !important;
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    box-shadow: none !important;
+
+    cursor: pointer;
+
+    border-radius: 14px;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    color: #e63946;
+
+    transition: all 0.3s ease;
+}
+
+.delete-account-item i {
+    color: #e63946;
+
+    font-size: 15px;
+
+    transition: 0.3s;
+}
+
+/* HOVER */
+
+.delete-account-item:hover {
+    background: rgba(230, 57, 70, 0.08) !important;
+
+    padding-left: 28px;
+}
+
+.delete-account-item:hover i {
+    transform: translateX(3px);
+}
+/* SWEET ALERT CUSTOM */
+
+.swal2-popup {
+    font-family: "Poppins", sans-serif;
+
+    border-radius: 24px !important;
+}
+
+.swal2-title {
+    font-size: 32px !important;
+
+    font-weight: 800 !important;
+
+    color: #0f172a !important;
+}
+
+.swal2-html-container {
+    font-size: 16px !important;
+
+    color: #64748b !important;
+
+    line-height: 1.7;
+}
+
+.swal2-actions {
+    width: 100%;
+
+    display: flex !important;
+
+    justify-content: center;
+
+    gap: 14px;
+
+    margin-top: 25px;
+}
+
+.swal2-confirm,
+.swal2-cancel {
+    height: 52px !important;
+
+    padding: 0 28px !important;
+
+    border-radius: 14px !important;
+
+    font-size: 15px !important;
+
+    font-weight: 700 !important;
+
+    transition: 0.3s !important;
+
+    border: none !important;
+
+    box-shadow: none !important;
+}
+
+.swal2-confirm:hover {
+    transform: translateY(-2px);
+}
+
+.swal2-cancel:hover {
+    transform: translateY(-2px);
+}
+
+.swal2-icon {
+    border-width: 4px !important;
+}
+
+/* SWEET ALERT BACKDROP */
+
+body.swal2-shown {
+    overflow: hidden !important;
+
+    padding-right: 0 !important;
+}
+
+/* BIKIN HEADER IKUT GELAP */
+
+.swal2-container {
+    backdrop-filter: blur(4px);
+
+    background: rgba(15, 23, 42, 0.72) !important;
+
+    z-index: 999999 !important;
+}
+
+/* HILANGKAN SCROLL */
+
+html.swal2-shown,
+body.swal2-shown {
+    overflow: hidden !important;
+
+    height: 100vh;
+}
+
+/* ANIMASI POPUP */
+
+.swal2-popup {
+    animation: popupShow 0.25s ease;
+}
+
+@keyframes popupShow {
+    from {
+        transform: scale(0.92);
+
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+
+        opacity: 1;
+    }
+}

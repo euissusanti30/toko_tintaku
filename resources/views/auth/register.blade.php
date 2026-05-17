@@ -1,52 +1,225 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="{{ asset('register.css') }}">
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Register Tintaku</title>
+
+    <!-- FONT -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- ICON -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="register-wrapper">
+
+        <div class="register-card">
+
+            <!-- LEFT -->
+            <div class="register-left">
+
+                <div>
+
+                    <img src="{{ asset('img/logotintaku.png') }}" class="register-logo">
+
+                    <h1>Join Tintaku</h1>
+
+                    <p>
+                        Daftarkan akun anda dan nikmati pengalaman
+                        belanja tinta printer premium dengan mudah,
+                        cepat, dan terpercaya.
+                    </p>
+
+                    <div class="register-features">
+
+                        <div>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Produk original & berkualitas
+                        </div>
+
+                        <div>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Pengiriman cepat ke seluruh Indonesia
+                        </div>
+
+                        <div>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Harga terbaik & terpercaya
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="register-right">
+
+                <div class="form-box">
+
+                    <h2>Create Account</h2>
+
+                    <p class="subtitle">
+                        Silahkan buat akun untuk mulai berbelanja di Tintaku
+                    </p>
+
+                    <!-- ERROR -->
+                    @if ($errors->any())
+
+                        <div class="alert alert-danger">
+
+                            {{ $errors->first() }}
+
+                        </div>
+
+                    @endif
+
+                    <form method="POST" action="{{ route('register') }}">
+
+                        @csrf
+
+                        <!-- NAME -->
+                        <div class="mb-4">
+
+                            <label>Full Name</label>
+
+                            <div class="input-group-custom">
+
+                                <i class="fa-solid fa-user"></i>
+
+                                <input type="text" name="name" placeholder="Masukkan nama lengkap" required>
+
+                            </div>
+
+                        </div>
+
+                        <!-- EMAIL -->
+                        <div class="mb-4">
+
+                            <label>Email</label>
+
+                            <div class="input-group-custom">
+
+                                <i class="fa-solid fa-envelope"></i>
+
+                                <input type="email" name="email" placeholder="Masukkan email" required>
+
+                            </div>
+
+                        </div>
+
+                        <!-- PASSWORD -->
+                        <div class="mb-4">
+
+                            <label>Password</label>
+
+                            <div class="input-group-custom">
+
+                                <i class="fa-solid fa-lock"></i>
+
+                                <input type="password" name="password" placeholder="Masukkan password" required>
+
+                            </div>
+
+                        </div>
+
+                        <!-- CONFIRM -->
+                        <div class="mb-4">
+
+                            <label>Confirm Password</label>
+
+                            <div class="input-group-custom">
+
+                                <i class="fa-solid fa-shield-halved"></i>
+
+                                <input type="password" name="password_confirmation" placeholder="Konfirmasi password"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+                        <!-- BUTTON -->
+                        <button class="register-btn">
+
+                            CREATE ACCOUNT
+
+                        </button>
+                        <!-- GOOGLE -->
+                        <div class="or-register">
+
+                            <span>OR CONTINUE WITH</span>
+
+                        </div>
+
+                        <a href="{{ route('google.register') }}" class="google-login-btn">
+
+                            <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google">
+
+                            Register with Google
+
+                        </a>
+                        </a>
+
+                    </form>
+
+                    <div class="login-link">
+
+                        Already have an account?
+
+                        <a href="{{ route('login') }}">
+                            Login
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    </div>
+    @if(session('success'))
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        <script>
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+            Swal.fire({
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+                icon: 'success',
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+                title: 'Berhasil!',
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+                text: '{{ session('success') }}',
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+                confirmButtonColor: '#19b5d2',
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
+                background: '#ffffff',
 
-            <x-primary-button class="ml-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+                color: '#0f172a',
+
+            });
+
+        </script>
+
+    @endif
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+
+</html>

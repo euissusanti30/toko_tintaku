@@ -25,7 +25,7 @@ class AdminSeeder extends Seeder
         \App\Models\User::create([
             'name' => 'Regular User',
             'nama' => 'User Biasa',
-            'email' => 'user@tintaku.com',
+            'email' => 'staff@tintaku.com',
             'role' => 0, // Regular User
             'password' => \Hash::make('password'),
         ]);
