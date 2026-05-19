@@ -107,8 +107,8 @@
         <!-- Pagination -->
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div>
-                Menampilkan {{ $customers->firstItem() }} - {{ $customers->lastItem() }} 
-                dari {{ $customers->totalItems() }} data
+                Menampilkan {{ $customers->firstItem() ?? 0 }} - {{ $customers->lastItem() ?? 0 }} 
+                dari {{ $customers->total() }} data
             </div>
             {{ $customers->links() }}
         </div>

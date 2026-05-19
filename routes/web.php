@@ -27,6 +27,22 @@ Route::get('/auth/google/register', [GoogleController::class, 'registerGoogle'])
     ->name('google.register');
 
 Route::get('/auth/google/callback/register', [GoogleController::class, 'handleRegister']);
+// Legacy /loginbackend redirect to /loginadmin (compatibility)
+Route::get('/loginbackend', function () {
+    return redirect('/loginadmin');
+});
+
+// Admin login routes
+use App\Http\Controllers\Auth\AdminLoginController;
+use App\Http\Controllers\Auth\AdminRegisterController;
+
+Route::middleware('guest')->group(function () {
+    Route::get('/loginadmin', [AdminLoginController::class, 'create'])->name('admin.login');
+    Route::post('/loginadmin', [AdminLoginController::class, 'store'])->name('admin.login.post');
+    // Admin creation (web) - protected by ADMIN_SETUP_KEY in .env
+    Route::get('/admin/create', [AdminRegisterController::class, 'create'])->name('admin.create');
+    Route::post('/admin/create', [AdminRegisterController::class, 'store'])->name('admin.create.post');
+});
 /*
 |--------------------------------------------------------------------------
 | AUTH CONTROLLER
@@ -128,7 +144,7 @@ Route::post('/api/shipping-cost', [FrontendProdukController::class, 'getShipping
 
 Route::prefix('backend')
     ->name('backend.')
-    ->middleware(['auth', 'admin'])
+    ->middleware(['auth:admin', 'admin'])
     ->group(function () {
 
         // DASHBOARD
