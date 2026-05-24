@@ -104,6 +104,17 @@
             justify-content: center;
         }
 
+        .main-navbar .nav-link:hover {
+    background: var(--primary);
+    color: white !important;
+}
+
+.main-navbar .active-menu{
+    background: var(--primary);
+    color: white !important;
+    border-radius: 4px;
+}
+
         /* SIDEBAR */
         .sidebar-card {
             background: white;
@@ -405,57 +416,79 @@
 
     </div>
     <!-- ================= NAVBAR ================= -->
-    <nav class="navbar navbar-expand-lg main-navbar">
+<nav class="navbar navbar-expand-lg main-navbar">
 
-        <div class="container">
+    <div class="container">
 
-            <button class="navbar-toggler bg-white" data-bs-toggle="collapse" data-bs-target="#nav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <button class="navbar-toggler bg-white" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <div class="collapse navbar-collapse" id="nav">
+        <div class="collapse navbar-collapse" id="nav">
 
-                <ul class="navbar-nav me-auto">
+            <ul class="navbar-nav me-auto">
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link kategori-btn dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fa-solid fa-bars me-2"></i>
-                            KATEGORI
-                        </a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link kategori-btn dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fa-solid fa-bars me-2"></i>
+                        KATEGORI
+                    </a>
 
-                        <ul class="dropdown-menu">
-                            @if(isset($kategori))
+                    <ul class="dropdown-menu">
+                        @if(isset($kategori))
 
-                                @foreach($kategori as $item)
+                            @foreach($kategori as $item)
 
-                                    <li>
+                                <li>
 
-                                        <a class="dropdown-item" href="/kategori/{{ $item->id }}">
+                                    <a class="dropdown-item" href="/kategori/{{ $item->id }}">
 
-                                            {{ $item->nama_kategori }}
+                                        {{ $item->nama_kategori }}
 
-                                        </a>
+                                    </a>
 
-                                    </li>
+                                </li>
 
-                                @endforeach
+                            @endforeach
 
-                            @endif
-                        </ul>
-                    </li>
+                        @endif
+                    </ul>
+                </li>
 
-                    <li class="nav-item"><a class="nav-link" href="/">BERANDA</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/shop">PRODUK</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">LOKASI</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/contact">HUBUNGI KAMI</a></li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('/') ? 'active-menu' : '' }}"
+                       href="/">
+                       BERANDA
+                    </a>
+                </li>
 
-                </ul>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('shop') ? 'active-menu' : '' }}"
+                       href="/shop">
+                       PRODUK
+                    </a>
+                </li>
 
-            </div>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('lokasi') ? 'active-menu' : '' }}"
+                       href="#">
+                       LOKASI
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('contact') ? 'active-menu' : '' }}"
+                       href="/contact">
+                       HUBUNGI KAMI
+                    </a>
+                </li>
+
+            </ul>
 
         </div>
-    </nav>
 
+    </div>
+</nav>
     <!-- ================= CONTENT ================= -->
     <section class="py-4">
         <div class="container">
@@ -478,12 +511,20 @@
                         <h5 class="sidebar-title">FILTER KATEGORI</h5>
 
                         <div class="category-list">
-                            @foreach($kategori as $item)
-                                <a href="/kategori/{{ $item->id }}">
-                                    {{ $item->nama_kategori }}
-                                </a>
-                            @endforeach
-                        </div>
+
+    @if(isset($kategori))
+
+        @foreach($kategori as $item)
+
+            <a href="/kategori/{{ $item->id }}">
+                {{ $item->nama_kategori }}
+            </a>
+
+        @endforeach
+
+    @endif
+
+</div>
 
                     </div>
 

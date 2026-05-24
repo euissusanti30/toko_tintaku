@@ -59,6 +59,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 */
 
 use App\Http\Controllers\Frontend\ProdukController as FrontendProdukController;
+use App\Http\Controllers\Frontend\ProdukController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,6 +88,8 @@ Route::get('/home', [FrontendProdukController::class, 'frontend'])
 
 Route::get('/shop', [FrontendProdukController::class, 'shop'])
     ->name('shop');
+
+Route::get('/search', [ProdukController::class, 'search']);
 
 Route::get('/detail/{id}', [FrontendProdukController::class, 'detail'])
     ->name('detail');
@@ -217,3 +220,7 @@ Route::delete('/delete-account', function () {
     return redirect('/');
 
 })->middleware('auth')->name('account.delete');
+
+
+//MIDTRANS//
+Route::get('/checkout/{id}', [App\Http\Controllers\Backend\TransaksiController::class, 'checkoutLangsung']);

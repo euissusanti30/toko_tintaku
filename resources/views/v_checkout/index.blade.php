@@ -338,9 +338,12 @@ SECTION UTAMA: Form Checkout
                             - JavaScript akan enable tombol setelah user pilih layanan
                             - Full width (w-100) dengan margin top (mt-3)
                             --}}
-                            <button type="submit" class="btn btn-tintaku w-100 mt-3" id="submit-btn" disabled>
-                                Buat Pesanan
-                            </button>
+                            <button
+    type="button"
+    id="pay-button"
+    class="btn btn-info w-100">
+    Bayar Sekarang
+</button>
 
                         {{-- Tutup form checkout --}}
                         </form>
@@ -653,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('total').innerHTML = '<strong>Rp ' + subtotal.toLocaleString('id-ID') + '</strong>';
         
         // Disable tombol submit (user harus pilih layanan dulu)
-        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('pay-button').disabled = true;
     }
     
     // -------------------------------------------------------------------------
@@ -858,7 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('total').innerHTML = '<strong>Rp ' + total.toLocaleString('id-ID') + '</strong>';
 
                 // Enable tombol submit (semua data sudah lengkap)
-                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('pay-button').disabled = false;
             });
         });
     }
@@ -868,4 +871,31 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {{-- Tutup section content --}}
+<script src="https://app.sandbox.midtrans.com/snap/snap.js"
+data-client-key="{{ config('services.midtrans.clientKey') }}">
+</script>
+
+<script>
+document.getElementById('pay-button').onclick = function () {
+
+    snap.pay('{{ $snapToken }}', {
+        onSuccess: function(result){
+            alert("Pembayaran berhasil!");
+            console.log(result);
+        },
+
+        onPending: function(result){
+            alert("Menunggu pembayaran!");
+            console.log(result);
+        },
+
+        onError: function(result){
+            alert("Pembayaran gagal!");
+            console.log(result);
+        }
+    });
+
+};
+</script>
+
 @endsection

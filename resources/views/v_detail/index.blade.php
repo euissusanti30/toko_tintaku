@@ -4,6 +4,21 @@
 
 <div class="content-card">
 
+    <!-- TITLE DETAIL -->
+
+    <div class="mb-4">
+
+        <h4 class="fw-bold text-dark">
+
+
+            Detail Produk
+
+        </h4>
+
+    </div>
+
+    <div class="row">
+
     <div class="row">
 
         <div class="col-md-5">
@@ -46,18 +61,29 @@
 
             </p>
 
-            <div class="mt-4">
+            <!-- BUTTON -->
+<div class="mt-4 d-flex gap-3 flex-wrap align-items-center">
 
-                <a href="/add-cart/{{ $produk->id }}"
-                    class="btn btn-tintaku btn-lg">
+    <!-- BELI SEKARANG -->
+    <a href="/checkout"
+        class="btn text-white px-4 py-3 fw-semibold shadow-sm rounded-3"
+        style="background-color: #47C7D9; border: none;">
 
-                    <i class="fa-solid fa-cart-shopping"></i>
+        <i class="fa-solid fa-bag-shopping me-2"></i>
 
-                    Tambah ke Keranjang
+        Checkout
 
-                </a>
+</a>
 
-            </div>
+    <!-- TAMBAH KERANJANG -->
+    <a href="/add-cart/{{ $produk->id }}"
+        class="btn btn-outline-info px-3 py-2 rounded-3">
+
+        <i class="fa-solid fa-cart-shopping"></i>
+
+    </a>
+
+</div>
 
         </div>
 

@@ -385,15 +385,37 @@ class ProdukController extends Controller
             $provinces = $rajaOngkir->getProvinces();
             
             // Ambil data semua kota dari service
-            $cities = $rajaOngkir->getCities(); // Get all cities
-            
-            // Return view checkout dengan data yang diperlukan
-            // provinces dan cities untuk dropdown alamat pengiriman
-            return view('v_checkout.index', compact(
-                'kategori',
-                'provinces',
-                'cities'
-            ));
+           $cities = $rajaOngkir->getCities();
+
+$cart = session()->get('cart', []);
+
+$subtotal = 0;
+
+foreach ($cart as $item) {
+    $subtotal += $item['harga'] * $item['qty'];
+}
+
+$params = [
+    'transaction_details' => [
+        'order_id' => 'ORDER-' . rand(),
+        'gross_amount' => $subtotal,
+    ],
+];
+
+\Midtrans\Config::$serverKey = config('services.midtrans.serverKey');
+\Midtrans\Config::$clientKey = config('services.midtrans.clientKey');
+\Midtrans\Config::$isProduction = false;
+\Midtrans\Config::$isSanitized = true;
+\Midtrans\Config::$is3ds = true;
+
+$snapToken = \Midtrans\Snap::getSnapToken($params);
+
+return view('v_checkout.index', compact(
+    'kategori',
+    'provinces',
+    'cities',
+    'snapToken'
+));
         } catch (\Exception $e) {
             // Tangkap error, log ke file log, dan redirect dengan pesan error
             \Log::error('Checkout error: ' . $e->getMessage());
@@ -694,6 +716,22 @@ class ProdukController extends Controller
         // Data yang dikirim: transaksi (dengan detail dan produk), kategori
         return view('v_checkout.invoice', compact('transaksi', 'kategori'));
     }
+
+    public function search(Request $request)
+{
+    $search = $request->search;
+
+    $produk = Produk::where('nama_produk', 'LIKE', "%$search%")
+        ->latest()
+        ->paginate(12);
+
+    $kategori = Kategori::all();
+
+    return view('v_shop.index', compact(
+        'produk',
+        'kategori'
+    ));
+}
     
     // =========================================================================
     // END OF CLASS PRODUK CONTROLLER

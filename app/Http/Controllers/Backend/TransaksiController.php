@@ -6,9 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class TransaksiController extends Controller
 {
+    public function __construct()
+{
+    Config::$serverKey = 'Mid-server-yewGUKcBcQnfOoFZy28beotu';
+    Config::$clientKey = 'Mid-client-pjdY_1lOi8EBrRUF';
+    Config::$isProduction = false;
+    Config::$isSanitized = true;
+    Config::$is3ds = true;
+}
     public function index()
     {
         $transaksi = Transaksi::with('detailTransaksi.produk')
@@ -49,12 +59,48 @@ class TransaksiController extends Controller
     public function destroy($id)
     {
         $transaksi = Transaksi::findOrFail($id);
-        
-        // Delete related detail transaksi first
+
         $transaksi->detailTransaksi()->delete();
         $transaksi->delete();
 
         return redirect()->route('backend.transaksi.index')
             ->with('success', 'Transaksi berhasil dihapus');
     }
+
+    public function checkoutLangsung($id)
+{
+    $produk = \App\Models\Produk::findOrFail($id);
+
+    $params = [
+        'transaction_details' => [
+            'order_id' => 'ORDER-' . rand(),
+            'gross_amount' => $produk->harga,
+        ],
+    ];
+
+    $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+    return view('v_checkout.index', [
+        'checkoutLangsung' => true,
+        'produk' => $produk,
+        'snapToken' => $snapToken
+    ]);
+}
+
+    public function payment()
+{
+    $total = 90000;
+
+    $params = [
+        'transaction_details' => [
+            'order_id' => rand(),
+            'gross_amount' => $total,
+        ],
+    ];
+
+    $snapToken = Snap::getSnapToken($params);
+
+    return view('v_checkout.index', compact('snapToken'));
+}
+
 }
