@@ -36,10 +36,13 @@
                 <input type="password" name="password" class="form-control" required minlength="8">
               </div>
 
+              <!-- INPUT SETUP KEY (PENGAMAN REGISTRASI ADMIN) -->
+              <!-- Input ini bertindak sebagai password/kunci rahasia untuk memvalidasi bahwa pendaftar adalah pemilik website. -->
+              <!-- Nilai yang diinputkan harus sama persis dengan variabel ADMIN_SETUP_KEY di file .env -->
               <div class="mb-3">
                 <label class="form-label">Setup Key</label>
                 <input type="password" name="setup_key" class="form-control" required>
-                <div class="form-text">Masukkan nilai `ADMIN_SETUP_KEY` dari file .env</div>
+                <div class="form-text">Masukkan nilai kunci keamanan `ADMIN_SETUP_KEY` dari file konfigurasi .env</div>
               </div>
 
               <button class="btn btn-primary w-100" type="submit">Buat Admin</button>
