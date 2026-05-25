@@ -12,6 +12,7 @@ class UserCustomer extends Model
     protected $fillable = [
         'name',
         'email',
+        'password',
         'phone',
         'address',
         'province',
@@ -27,6 +28,25 @@ class UserCustomer extends Model
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class, 'customer_id');
+    }
+
+    /**
+     * Hidden attributes
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * Hash password when setting
+     */
+    public function setPasswordAttribute($value)
+    {
+        if ($value !== null && $value !== '') {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 
     public function scopeActive($query)

@@ -387,34 +387,10 @@ class ProdukController extends Controller
             // Ambil data semua kota dari service
            $cities = $rajaOngkir->getCities();
 
-$cart = session()->get('cart', []);
-
-$subtotal = 0;
-
-foreach ($cart as $item) {
-    $subtotal += $item['harga'] * $item['qty'];
-}
-
-$params = [
-    'transaction_details' => [
-        'order_id' => 'ORDER-' . rand(),
-        'gross_amount' => $subtotal,
-    ],
-];
-
-\Midtrans\Config::$serverKey = config('services.midtrans.serverKey');
-\Midtrans\Config::$clientKey = config('services.midtrans.clientKey');
-\Midtrans\Config::$isProduction = false;
-\Midtrans\Config::$isSanitized = true;
-\Midtrans\Config::$is3ds = true;
-
-$snapToken = \Midtrans\Snap::getSnapToken($params);
-
 return view('v_checkout.index', compact(
     'kategori',
     'provinces',
-    'cities',
-    'snapToken'
+    'cities'
 ));
         } catch (\Exception $e) {
             // Tangkap error, log ke file log, dan redirect dengan pesan error
@@ -509,7 +485,7 @@ return view('v_checkout.index', compact(
                 'telepon' => $request->telepon,              // No telepon
                 'alamat' => $request->alamat,                // Alamat lengkap
                 'total_harga' => $totalHarga,                // Total bayar (produk + ongkir)
-                'status' => 'pending'                        // Status awal: pending
+                'status' => 'belum bayar'                    // Status awal: belum bayar
             ]);
 
             // =========================================================================
@@ -535,10 +511,9 @@ return view('v_checkout.index', compact(
             // Hapus session cart (sudah tidak diperlukan lagi)
             session()->forget('cart');
 
-            // Redirect ke halaman invoice dengan ID transaksi
-            // with('success'): kirim flash message sukses ke view
-            return redirect('/invoice/' . $transaksi->id)
-                ->with('success', 'Pesanan berhasil dibuat!');
+            // Redirect ke halaman rincian pembayaran (payment detail)
+            return redirect()->route('frontend.payment.detail', $transaksi->id)
+                ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
 
         } catch (\Exception $e) {
             // Jika terjadi error (database error, dll)
@@ -715,6 +690,151 @@ return view('v_checkout.index', compact(
         // Return view invoice dengan data transaksi lengkap
         // Data yang dikirim: transaksi (dengan detail dan produk), kategori
         return view('v_checkout.invoice', compact('transaksi', 'kategori'));
+    }
+
+    /**
+     * TAMPILKAN RINCIAN PEMBAYARAN & INISIALISASI MIDTRANS SNAP TOKEN
+     * 
+     * Method ini menampilkan detail pesanan yang baru dibuat atau yang belum dibayar,
+     * serta menginisialisasi parameter transaksi untuk membuat token pembayaran Midtrans Snap.
+     * 
+     * @param int $id ID Transaksi
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function paymentDetail($id)
+    {
+        // Mengambil data transaksi beserta relasi detail transaksi dan produk menggunakan Eager Loading
+        $transaksi = Transaksi::with('detailTransaksi.produk')
+            ->findOrFail($id);
+
+        // Mengambil kategori produk untuk kebutuhan navigasi/sidebar frontend
+        $kategori = Kategori::all();
+
+        // 1. Konfigurasi kredensial Midtrans dari file config/services.php
+        \Midtrans\Config::$serverKey = config('services.midtrans.serverKey');
+        \Midtrans\Config::$clientKey = config('services.midtrans.clientKey');
+        \Midtrans\Config::$isProduction = config('services.midtrans.isProduction', false);
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
+
+        // 2. Siapkan parameter yang dibutuhkan oleh Midtrans API
+        $params = [
+            'transaction_details' => [
+                'order_id' => 'ORDER-' . $transaksi->id . '-' . time(), // Format order_id unik
+                'gross_amount' => $transaksi->total_harga,             // Nominal total belanja (termasuk ongkir)
+            ],
+            'customer_details' => [
+                'first_name' => $transaksi->nama_customer, // Nama customer
+                'email' => $transaksi->email,               // Email customer
+                'phone' => $transaksi->telepon,             // Telepon customer
+            ]
+        ];
+
+        try {
+            // 3. Minta token transaksi Snap dari Midtrans API
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            // Catat log error jika koneksi/integrasi ke Midtrans gagal
+            \Log::error('Midtrans getSnapToken error: ' . $e->getMessage());
+            return redirect('/')->with('error', 'Gagal memuat rincian pembayaran Midtrans: ' . $e->getMessage());
+        }
+
+        // Tampilkan halaman rincian pembayaran dengan data transaksi dan token Snap
+        return view('v_checkout.payment_detail', compact('transaksi', 'kategori', 'snapToken'));
+    }
+
+    /**
+     * HANDLE PEMBAYARAN BERHASIL (REDIRECT CLIENT-SIDE)
+     * 
+     * Method ini dipanggil ketika pelanggan berhasil membayar di popup Midtrans Snap.
+     * Status transaksi akan diperbarui di database menjadi 'sudah bayar'.
+     * 
+     * @param int $id ID Transaksi
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function paymentSuccess($id)
+    {
+        // Cari data transaksi berdasarkan ID
+        $transaksi = Transaksi::findOrFail($id);
+        
+        // Ubah status pembayaran di database menjadi 'sudah bayar'
+        $transaksi->status = 'sudah bayar';
+        $transaksi->save();
+
+        // Redirect pengguna ke halaman Invoice dengan pesan sukses
+        return redirect('/invoice/' . $transaksi->id)
+            ->with('success', 'Pembayaran berhasil dilakukan!');
+    }
+
+    /**
+     * DAFTAR PESANAN CUSTOMER (ONGOING ORDERS)
+     * 
+     * Menampilkan riwayat transaksi yang pernah dilakukan oleh customer yang sedang login.
+     * Diidentifikasi berdasarkan kesamaan email akun customer dengan email pada transaksi.
+     * 
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function pesanan()
+    {
+        // 1. Validasi otentikasi: pastikan pengguna sudah melakukan login
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melihat daftar pesanan Anda.');
+        }
+
+        // 2. Ambil email dari user yang saat ini sedang login
+        $userEmail = auth()->user()->email;
+
+        // 3. Query semua transaksi milik user berdasarkan email tersebut
+        // Memakai with() untuk eager loading detail transaksi dan produk agar efisien (menghindari N+1 query)
+        $transaksi = Transaksi::with('detailTransaksi.produk')
+            ->where('email', $userEmail)
+            ->latest() // Diurutkan dari yang paling baru
+            ->get();
+
+        // 4. Mengambil data kategori untuk menu navigasi frontend
+        $kategori = Kategori::all();
+
+        // Tampilkan view pesanan dengan menyertakan data transaksi dan kategori
+        return view('v_checkout.pesanan', compact('transaksi', 'kategori'));
+    }
+
+    /**
+     * BATALKAN & HAPUS PESANAN OLEH CUSTOMER
+     * 
+     * Mengizinkan pelanggan membatalkan pesanan yang belum dibayar.
+     * Pesanan beserta detail produknya akan dihapus permanen dari database.
+     * 
+     * @param int $id ID Transaksi
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function batalkanPesanan($id)
+    {
+        // 1. Pastikan user sudah login
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        // 2. Cari transaksi berdasarkan ID
+        $transaksi = Transaksi::findOrFail($id);
+
+        // 3. Validasi Keamanan: Pastikan transaksi ini milik akun yang sedang login
+        if ($transaksi->email !== auth()->user()->email) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan pesanan ini.');
+        }
+
+        // 4. Validasi Status: Hanya pesanan dengan status 'belum bayar' yang boleh dibatalkan
+        if ($transaksi->status !== 'belum bayar') {
+            return redirect()->back()->with('error', 'Pesanan yang sudah dibayar atau diproses tidak dapat dibatalkan.');
+        }
+
+        // 5. Hapus detail transaksi terlebih dahulu untuk menjaga integritas relasi foreign key database
+        $transaksi->detailTransaksi()->delete();
+        
+        // 6. Hapus header transaksi utama
+        $transaksi->delete();
+
+        // Kembali ke halaman sebelumnya dengan pemberitahuan sukses
+        return redirect()->back()->with('success', 'Pesanan berhasil dibatalkan dan dihapus.');
     }
 
     public function search(Request $request)

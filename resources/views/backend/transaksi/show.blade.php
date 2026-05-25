@@ -21,6 +21,12 @@
                         <p><strong>Total Harga:</strong> Rp {{ number_format($transaksi->total_harga) }}</p>
                         <p><strong>Status:</strong> 
                             @switch($transaksi->status)
+                                @case('belum bayar')
+                                    <span class="badge bg-danger">Belum Bayar</span>
+                                    @break
+                                @case('sudah bayar')
+                                    <span class="badge bg-success">Sudah Bayar</span>
+                                    @break
                                 @case('pending')
                                     <span class="badge bg-warning">Pending</span>
                                     @break
@@ -45,6 +51,8 @@
                             <div class="row">
                                 <div class="col-md-8">
                                     <select name="status" class="form-control form-control-sm">
+                                        <option value="belum bayar" {{ $transaksi->status == 'belum bayar' ? 'selected' : '' }}>Belum Bayar</option>
+                                        <option value="sudah bayar" {{ $transaksi->status == 'sudah bayar' ? 'selected' : '' }}>Sudah Bayar</option>
                                         <option value="pending" {{ $transaksi->status == 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="proses" {{ $transaksi->status == 'proses' ? 'selected' : '' }}>Diproses</option>
                                         <option value="selesai" {{ $transaksi->status == 'selesai' ? 'selected' : '' }}>Selesai</option>

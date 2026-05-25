@@ -2,7 +2,12 @@
 
 @section('content')
 
-<h3 class="mb-4">Data Transaksi</h3>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Data Transaksi</h3>
+    <a href="{{ route('backend.transaksi.export') }}" class="btn btn-success btn-sm">
+        <i class="fa-solid fa-file-excel me-2"></i> Ekspor ke Excel
+    </a>
+</div>
 
 <div class="card">
     <div class="card-body">
@@ -29,6 +34,12 @@
                         <td>Rp {{ number_format($row->total_harga) }}</td>
                         <td>
                             @switch($row->status)
+                                @case('belum bayar')
+                                    <span class="badge bg-danger">Belum Bayar</span>
+                                    @break
+                                @case('sudah bayar')
+                                    <span class="badge bg-success">Sudah Bayar</span>
+                                    @break
                                 @case('pending')
                                     <span class="badge bg-warning">Pending</span>
                                     @break

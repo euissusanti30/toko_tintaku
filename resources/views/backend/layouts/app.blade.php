@@ -44,10 +44,6 @@
                 Transaksi
             </a>
 
-            <a href="{{ route('backend.user-customer.index') }}" class="text-white text-decoration-none">
-                Customer
-            </a>
-
             <!-- LOGOUT -->
             <a href="#"
                 class="text-white text-decoration-none"

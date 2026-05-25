@@ -71,7 +71,6 @@ use App\Http\Controllers\Backend\ProdukController as BackendProdukController;
 use App\Http\Controllers\Backend\KategoriController;
 use App\Http\Controllers\Backend\BerandaController;
 use App\Http\Controllers\Backend\TransaksiController;
-use App\Http\Controllers\Backend\UserCustomerController;
 
 
 /*
@@ -124,6 +123,14 @@ Route::post('/checkout-store', [FrontendProdukController::class, 'checkoutStore'
     ->name('frontend.checkout.store');
 
 Route::get('/invoice/{id}', [FrontendProdukController::class, 'invoice']);
+Route::get('/payment-detail/{id}', [FrontendProdukController::class, 'paymentDetail'])
+    ->name('frontend.payment.detail');
+Route::get('/payment-success/{id}', [FrontendProdukController::class, 'paymentSuccess'])
+    ->name('frontend.payment.success');
+Route::get('/pesanan', [FrontendProdukController::class, 'pesanan'])
+    ->name('frontend.pesanan');
+Route::delete('/pesanan/batal/{id}', [FrontendProdukController::class, 'batalkanPesanan'])
+    ->name('frontend.pesanan.batal');
 
 
 /*
@@ -163,11 +170,10 @@ Route::prefix('backend')
             ->except(['show']);
 
         // TRANSAKSI
+        Route::get('transaksi/export', [TransaksiController::class, 'exportExcel'])
+            ->name('transaksi.export');
         Route::resource('transaksi', TransaksiController::class)
             ->only(['index', 'show', 'update', 'destroy']);
-
-        // USER CUSTOMER
-        Route::resource('user-customer', UserCustomerController::class);
 
 });
 

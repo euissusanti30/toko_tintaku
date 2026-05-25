@@ -45,7 +45,7 @@ class TransaksiController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,proses,selesai,batal'
+            'status' => 'required|in:belum bayar,sudah bayar,pending,proses,selesai,batal'
         ]);
 
         $transaksi = Transaksi::findOrFail($id);
@@ -102,5 +102,76 @@ class TransaksiController extends Controller
 
     return view('v_checkout.index', compact('snapToken'));
 }
+
+    /**
+     * EKSPOR DATA TRANSAKSI KE EXCEL (CSV)
+     * 
+     * Method ini menarik semua data transaksi yang ada di database beserta rincian item produknya,
+     * lalu menyajikannya dalam bentuk unduhan file spreadsheet CSV yang sepenuhnya kompatibel dengan Microsoft Excel.
+     * 
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function exportExcel()
+    {
+        // 1. Ambil semua data transaksi, gunakan Eager Loading (with) untuk relasi detailTransaksi dan produk agar performa cepat
+        $transaksi = Transaksi::with('detailTransaksi.produk')->latest()->get();
+
+        // 2. Tentukan nama file unduhan yang dinamis menggunakan tanggal & waktu saat ini
+        $fileName = 'data_transaksi_' . date('Y-m-d_H-i-s') . '.csv';
+
+        // 3. Siapkan header response HTTP untuk memicu unduhan file CSV
+        $headers = array(
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        );
+
+        // 4. Definisikan nama kolom header spreadsheet
+        $columns = array('No', 'Kode Transaksi', 'Nama Customer', 'Email', 'Telepon', 'Alamat', 'Daftar Produk', 'Total Harga', 'Status', 'Tanggal Transaksi');
+
+        // 5. Gunakan callback streaming agar data ditulis langsung ke output buffer tanpa memakan banyak memori server
+        $callback = function() use($transaksi, $columns) {
+            // Membuka output stream PHP
+            $file = fopen('php://output', 'w');
+            
+            // Tambahkan UTF-8 BOM (Byte Order Mark) di awal file agar Excel otomatis mengenali encoding UTF-8 dengan benar
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Tulis baris header kolom dengan delimiter titik koma (;) yang merupakan standar Excel regional Indonesia/Eropa
+            fputcsv($file, $columns, ';');
+
+            // 6. Ulangi setiap transaksi dan tulis datanya ke file
+            foreach ($transaksi as $index => $row) {
+                // Susun string berisi daftar produk dan kuantitasnya
+                $produkList = [];
+                foreach ($row->detailTransaksi as $detail) {
+                    $produkList[] = ($detail->produk->nama_produk ?? 'Produk tidak ditemukan') . ' (' . $detail->qty . 'x)';
+                }
+                $produkStr = implode(', ', $produkList);
+
+                // Tulis satu baris transaksi ke file CSV
+                fputcsv($file, array(
+                    $index + 1,
+                    '#' . str_pad($row->id, 6, '0', STR_PAD_LEFT), // Format ID Pesanan agar seragam 6 digit
+                    $row->nama_customer,
+                    $row->email,
+                    $row->telepon,
+                    $row->alamat,
+                    $produkStr,
+                    $row->total_harga,
+                    $row->status,
+                    $row->created_at->format('Y-m-d H:i:s')
+                ), ';');
+            }
+
+            // Tutup output stream
+            fclose($file);
+        };
+
+        // Kembalikan response streaming dengan file CSV
+        return response()->stream($callback, 200, $headers);
+    }
 
 }

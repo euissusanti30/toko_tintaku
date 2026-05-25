@@ -470,6 +470,13 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->is('pesanan') ? 'active-menu' : '' }}"
+                       href="/pesanan">
+                       PESANAN
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link {{ request()->is('lokasi') ? 'active-menu' : '' }}"
                        href="#">
                        LOKASI

@@ -339,10 +339,11 @@ SECTION UTAMA: Form Checkout
                             - Full width (w-100) dengan margin top (mt-3)
                             --}}
                             <button
-    type="button"
+    type="submit"
     id="pay-button"
-    class="btn btn-info w-100">
-    Bayar Sekarang
+    class="btn btn-info w-100"
+    disabled>
+    Buat Pesanan
 </button>
 
                         {{-- Tutup form checkout --}}
@@ -868,34 +869,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
 // Tutup DOMContentLoaded event listener
 });
-</script>
-
-{{-- Tutup section content --}}
-<script src="https://app.sandbox.midtrans.com/snap/snap.js"
-data-client-key="{{ config('services.midtrans.clientKey') }}">
-</script>
-
-<script>
-document.getElementById('pay-button').onclick = function () {
-
-    snap.pay('{{ $snapToken }}', {
-        onSuccess: function(result){
-            alert("Pembayaran berhasil!");
-            console.log(result);
-        },
-
-        onPending: function(result){
-            alert("Menunggu pembayaran!");
-            console.log(result);
-        },
-
-        onError: function(result){
-            alert("Pembayaran gagal!");
-            console.log(result);
-        }
-    });
-
-};
 </script>
 
 @endsection
