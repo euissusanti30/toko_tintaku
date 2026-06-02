@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Produk;
-use App\Models\Kategori; // ✅ TAMBAHKAN INI
+use App\Models\Kategori; //TAMBAHKAN INI
 
 class BerandaController extends Controller
 {
@@ -16,12 +16,12 @@ class BerandaController extends Controller
             ->take(6)
             ->get();
 
-        // ✅ TAMBAHKAN INI
+        // TAMBAHKAN INI
         $kategori = Kategori::all();
 
         return view('v_beranda.index', [
             'produk' => $produk,
-            'kategori' => $kategori // ✅ KIRIM KE VIEW
+            'kategori' => $kategori //KIRIM KE VIEW
         ]);
     }
 }
