@@ -1,4 +1,17 @@
-## Tintaku Website Laravel Base
+# Tintaku Webiste Project Laravel Base
+
+Pengembangan Website Toko Online penjualan tinta printer Tintaku
+
+# Bina Sarana Informatics University student assignment project for S4 Information Systems Study Program, Web Programing 3 course.
+<img width="260" height="267" alt="logo-universitas-bina-sarana-informatika-ubsi" src="https://github.com/user-attachments/assets/180d953d-2ec1-46cf-b977-2690e353196b" />
+
+
+Project Team
+- Muhammad Farhan
+- Aditya aldrin subagja
+- Chairul anwar
+- Euis Susanti
+- Angga Nugroho
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
