@@ -9,41 +9,85 @@ use App\Models\DetailTransaksi;
 use Midtrans\Config;
 use Midtrans\Snap;
 
+/**
+ * CONTROLLER: MANAJEMEN TRANSAKSI (BACKEND/ADMIN)
+ *
+ * Mengatur pengelolaan data transaksi dari sisi admin.
+ * Fitur: lihat semua transaksi, detail, ubah status,
+ * hapus, integrasi payment Midtrans, dan ekspor CSV.
+ */
 class TransaksiController extends Controller
 {
+    /**
+     * INISIALISASI KONFIGURASI MIDTRANS
+     *
+     * Dipanggil otomatis saat controller diakses.
+     * Mengatur kredensial Midtrans untuk memproses pembayaran.
+     */
     public function __construct()
-{
-    Config::$serverKey = 'Mid-server-yewGUKcBcQnfOoFZy28beotu';
-    Config::$clientKey = 'Mid-client-pjdY_1lOi8EBrRUF';
-    Config::$isProduction = false;
-    Config::$isSanitized = true;
-    Config::$is3ds = true;
-}
+    {
+        Config::$serverKey    = 'Mid-server-yewGUKcBcQnfOoFZy28beotu'; // Kunci rahasia server
+        Config::$clientKey    = 'Mid-client-pjdY_1lOi8EBrRUF';          // Kunci publik browser
+        Config::$isProduction = false;  // false = sandbox/testing, true = live
+        Config::$isSanitized  = true;   // Midtrans membersihkan input berbahaya
+        Config::$is3ds        = true;   // Aktifkan keamanan 3D Secure
+    }
+
+    /**
+     * TAMPILKAN DAFTAR SEMUA TRANSAKSI
+     *
+     * Mengambil semua transaksi beserta relasi detail & produk,
+     * lalu ditampilkan di halaman daftar transaksi admin.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
+        // with('detailTransaksi.produk'): eager loading relasi bersarang agar tidak N+1 query
+        // latest(): urutkan dari yang paling baru
         $transaksi = Transaksi::with('detailTransaksi.produk')
             ->latest()
             ->get();
 
         return view('backend.transaksi.index', [
-            'judul' => 'Data Transaksi',
+            'judul'     => 'Data Transaksi',
             'transaksi' => $transaksi
         ]);
     }
 
+    /**
+     * TAMPILKAN DETAIL SATU TRANSAKSI
+     *
+     * Menampilkan info lengkap satu transaksi termasuk daftar produk yang dibeli.
+     *
+     * @param  int  $id  ID transaksi
+     * @return \Illuminate\View\View
+     */
     public function show($id)
     {
+        // findOrFail(): jika ID tidak ditemukan -> otomatis return 404
         $transaksi = Transaksi::with('detailTransaksi.produk')
             ->findOrFail($id);
 
         return view('backend.transaksi.show', [
-            'judul' => 'Detail Transaksi',
+            'judul'     => 'Detail Transaksi',
             'transaksi' => $transaksi
         ]);
     }
 
+    /**
+     * PERBARUI STATUS TRANSAKSI
+     *
+     * Admin mengubah status ke salah satu:
+     * belum bayar | sudah bayar | pending | proses | selesai | batal
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
+        // Validasi: status harus salah satu nilai yang diizinkan
         $request->validate([
             'status' => 'required|in:belum bayar,sudah bayar,pending,proses,selesai,batal'
         ]);
@@ -56,10 +100,20 @@ class TransaksiController extends Controller
             ->with('success', 'Status transaksi berhasil diupdate');
     }
 
+    /**
+     * HAPUS TRANSAKSI BESERTA DETAIL-NYA
+     *
+     * Hapus detail_transaksi dahulu (child) lalu baru hapus transaksi utama (parent)
+     * untuk menjaga integritas foreign key database.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
         $transaksi = Transaksi::findOrFail($id);
 
+        // Hapus child (detail) dulu, baru hapus parent (transaksi)
         $transaksi->detailTransaksi()->delete();
         $transaksi->delete();
 
@@ -67,59 +121,76 @@ class TransaksiController extends Controller
             ->with('success', 'Transaksi berhasil dihapus');
     }
 
+    /**
+     * CHECKOUT LANGSUNG SATU PRODUK (TANPA KERANJANG)
+     *
+     * Buat Snap Token Midtrans untuk checkout produk secara langsung.
+     *
+     * @param  int  $id  ID produk
+     * @return \Illuminate\View\View
+     */
     public function checkoutLangsung($id)
-{
-    $produk = \App\Models\Produk::findOrFail($id);
+    {
+        $produk = \App\Models\Produk::findOrFail($id);
 
-    $params = [
-        'transaction_details' => [
-            'order_id' => 'ORDER-' . rand(),
-            'gross_amount' => $produk->harga,
-        ],
-    ];
+        // Siapkan parameter transaksi Midtrans
+        $params = [
+            'transaction_details' => [
+                'order_id'     => 'ORDER-' . rand(), // ID pesanan unik
+                'gross_amount' => $produk->harga,    // Total = harga produk
+            ],
+        ];
 
-    $snapToken = \Midtrans\Snap::getSnapToken($params);
+        // Minta Snap Token dari API Midtrans (digunakan membuka popup pembayaran)
+        $snapToken = \Midtrans\Snap::getSnapToken($params);
 
-    return view('v_checkout.index', [
-        'checkoutLangsung' => true,
-        'produk' => $produk,
-        'snapToken' => $snapToken
-    ]);
-}
-
-    public function payment()
-{
-    $total = 90000;
-
-    $params = [
-        'transaction_details' => [
-            'order_id' => rand(),
-            'gross_amount' => $total,
-        ],
-    ];
-
-    $snapToken = Snap::getSnapToken($params);
-
-    return view('v_checkout.index', compact('snapToken'));
-}
+        return view('v_checkout.index', [
+            'checkoutLangsung' => true,
+            'produk'           => $produk,
+            'snapToken'        => $snapToken
+        ]);
+    }
 
     /**
-     * EKSPOR DATA TRANSAKSI KE EXCEL (CSV)
-     * 
-     * Method ini menarik semua data transaksi yang ada di database beserta rincian item produknya,
-     * lalu menyajikannya dalam bentuk unduhan file spreadsheet CSV yang sepenuhnya kompatibel dengan Microsoft Excel.
-     * 
+     * HALAMAN PEMBAYARAN DEMO
+     *
+     * Method uji coba integrasi Midtrans Snap dengan nominal tetap Rp 90.000.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function payment()
+    {
+        $total = 90000; // Nominal demo
+
+        $params = [
+            'transaction_details' => [
+                'order_id'     => rand(),  // ID acak untuk demo
+                'gross_amount' => $total,
+            ],
+        ];
+
+        $snapToken = Snap::getSnapToken($params);
+
+        return view('v_checkout.index', compact('snapToken'));
+    }
+
+    /**
+     * EKSPOR DATA TRANSAKSI KE FILE CSV (EXCEL)
+     *
+     * Menghasilkan unduhan file CSV semua transaksi beserta detail produk.
+     * Menggunakan streaming response agar hemat memori server.
+     *
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportExcel()
     {
-        // 1. Ambil semua data transaksi, gunakan Eager Loading (with) untuk relasi detailTransaksi dan produk agar performa cepat
+        // Ambil semua transaksi dengan eager loading relasi
         $transaksi = Transaksi::with('detailTransaksi.produk')->latest()->get();
 
-        // 2. Tentukan nama file unduhan yang dinamis menggunakan tanggal & waktu saat ini
+        // Nama file dinamis berdasarkan tanggal & waktu
         $fileName = 'data_transaksi_' . date('Y-m-d_H-i-s') . '.csv';
 
-        // 3. Siapkan header response HTTP untuk memicu unduhan file CSV
+        // Header HTTP untuk memicu browser mendownload file
         $headers = array(
             "Content-type"        => "text/csv; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=$fileName",
@@ -128,33 +199,30 @@ class TransaksiController extends Controller
             "Expires"             => "0"
         );
 
-        // 4. Definisikan nama kolom header spreadsheet
+        // Nama kolom di header spreadsheet
         $columns = array('No', 'Kode Transaksi', 'Nama Customer', 'Email', 'Telepon', 'Alamat', 'Daftar Produk', 'Total Harga', 'Status', 'Tanggal Transaksi');
 
-        // 5. Gunakan callback streaming agar data ditulis langsung ke output buffer tanpa memakan banyak memori server
+        // Streaming callback: tulis data langsung ke output buffer
         $callback = function() use($transaksi, $columns) {
-            // Membuka output stream PHP
             $file = fopen('php://output', 'w');
-            
-            // Tambahkan UTF-8 BOM (Byte Order Mark) di awal file agar Excel otomatis mengenali encoding UTF-8 dengan benar
+
+            // UTF-8 BOM agar Excel membaca karakter Indonesia dengan benar
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            // Tulis baris header kolom dengan delimiter titik koma (;) yang merupakan standar Excel regional Indonesia/Eropa
+
+            // Tulis baris header kolom (delimiter titik koma = standar Excel Indonesia)
             fputcsv($file, $columns, ';');
 
-            // 6. Ulangi setiap transaksi dan tulis datanya ke file
             foreach ($transaksi as $index => $row) {
-                // Susun string berisi daftar produk dan kuantitasnya
+                // Susun daftar produk: "Kaos Polos (2x), Celana (1x)"
                 $produkList = [];
                 foreach ($row->detailTransaksi as $detail) {
                     $produkList[] = ($detail->produk->nama_produk ?? 'Produk tidak ditemukan') . ' (' . $detail->qty . 'x)';
                 }
                 $produkStr = implode(', ', $produkList);
 
-                // Tulis satu baris transaksi ke file CSV
                 fputcsv($file, array(
                     $index + 1,
-                    '#' . str_pad($row->id, 6, '0', STR_PAD_LEFT), // Format ID Pesanan agar seragam 6 digit
+                    '#' . str_pad($row->id, 6, '0', STR_PAD_LEFT), // Format ID: #000001
                     $row->nama_customer,
                     $row->email,
                     $row->telepon,
@@ -166,12 +234,9 @@ class TransaksiController extends Controller
                 ), ';');
             }
 
-            // Tutup output stream
             fclose($file);
         };
 
-        // Kembalikan response streaming dengan file CSV
         return response()->stream($callback, 200, $headers);
     }
-
 }
