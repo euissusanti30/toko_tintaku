@@ -8,24 +8,39 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Class User
+ * 
+ * Model Eloquent untuk merepresentasikan tabel `users` di MySQL.
+ * Menggunakan HasApiTokens (Laravel Sanctum) untuk menghasilkan access token pada API Flutter.
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal (Mass Assignable).
+     * 
+     * Menambahkan kolom:
+     * - `nama`: Nama lengkap kustomer.
+     * - `phone`: Nomor telepon/WhatsApp.
+     * - `address`: Alamat lengkap pengiriman kustomer.
+     * - `role`: Level hak akses (0: Customer, 1: Admin).
      *
      * @var array<int, string>
      */
     protected $fillable = [
         'name',
+        'nama',
         'email',
         'role',
         'password',
+        'phone',
+        'address',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Atribut yang disembunyikan saat data user dikonversi ke JSON.
      *
      * @var array<int, string>
      */
@@ -35,7 +50,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
+     * Casting tipe data kolom.
      *
      * @var array<string, string>
      */
