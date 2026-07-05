@@ -34,7 +34,7 @@ class GoogleController extends Controller
         // redirectUrl(): tentukan URL callback setelah Google selesai memproses
         // redirect(): arahkan browser ke Google OAuth
         return Socialite::driver('google')
-            ->redirectUrl('http://127.0.0.1:8000/auth/google/callback/login')
+            ->redirectUrl(config('services.google.redirect_login'))
             ->redirect();
     }
 
@@ -52,7 +52,7 @@ class GoogleController extends Controller
         try {
             // Ambil data profil user dari Google (nama, email, foto, dll)
             $googleUser = Socialite::driver('google')
-                ->redirectUrl('http://127.0.0.1:8000/auth/google/callback/login')
+                ->redirectUrl(config('services.google.redirect_login'))
                 ->user();
 
             // Cari akun di database berdasarkan email Google
@@ -96,7 +96,7 @@ class GoogleController extends Controller
     public function registerGoogle()
     {
         return Socialite::driver('google')
-            ->redirectUrl('http://127.0.0.1:8000/auth/google/callback/register')
+            ->redirectUrl(config('services.google.redirect_register'))
             ->redirect();
     }
 
@@ -115,7 +115,7 @@ class GoogleController extends Controller
         try {
             // Ambil data profil user dari Google
             $googleUser = Socialite::driver('google')
-                ->redirectUrl('http://127.0.0.1:8000/auth/google/callback/register')
+                ->redirectUrl(config('services.google.redirect_register'))
                 ->user();
 
             // Cek apakah email Google sudah pernah terdaftar

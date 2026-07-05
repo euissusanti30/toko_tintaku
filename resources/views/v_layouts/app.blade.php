@@ -478,7 +478,7 @@
 
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('lokasi') ? 'active-menu' : '' }}"
-                       href="#">
+                       href="/lokasi">
                        LOKASI
                     </a>
                 </li>

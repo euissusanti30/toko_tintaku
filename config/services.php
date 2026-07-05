@@ -40,13 +40,15 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'redirect' => env('GOOGLE_REDIRECT_LOGIN_URI'),
+        'redirect_login' => env('GOOGLE_REDIRECT_LOGIN_URI'),
+        'redirect_register' => env('GOOGLE_REDIRECT_REGISTER_URI'),
     ],
 
     'midtrans' => [
-    'serverKey' => env('MIDTRANS_SERVER_KEY'),
-    'clientKey' => env('MIDTRANS_CLIENT_KEY'),
-    'isProduction' => env('MIDTRANS_IS_PRODUCTION', false),
-],
+        'serverKey' => env('MIDTRANS_SERVER_KEY'),
+        'clientKey' => env('MIDTRANS_CLIENT_KEY'),
+        'isProduction' => env('MIDTRANS_IS_PRODUCTION', false),
+    ],
 
 ];

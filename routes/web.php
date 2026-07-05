@@ -15,7 +15,8 @@ use App\Http\Controllers\Auth\GoogleController;
 
 Route::get('/auth/google/login', [GoogleController::class, 'loginGoogle'])
     ->name('google.login');
-Route::get('/auth/google/callback/login', [GoogleController::class, 'handleLogin']);
+Route::get('/auth/google/callback/login', [GoogleController::class, 'handleLogin'])
+    ->name('google.callback.login');
 
 /*
 |--------------------------------------------------------------------------
@@ -26,7 +27,8 @@ Route::get('/auth/google/callback/login', [GoogleController::class, 'handleLogin
 Route::get('/auth/google/register', [GoogleController::class, 'registerGoogle'])
     ->name('google.register');
 
-Route::get('/auth/google/callback/register', [GoogleController::class, 'handleRegister']);
+Route::get('/auth/google/callback/register', [GoogleController::class, 'handleRegister'])
+    ->name('google.callback.register');
 // Legacy /loginbackend redirect to /loginadmin (compatibility)
 Route::get('/loginbackend', function () {
     return redirect('/loginadmin');
@@ -100,6 +102,12 @@ Route::get('/contact', function () {
     $kategori = Kategori::all();
     return view('v_contact.index', compact('kategori'));
 });
+
+Route::get('/lokasi', function () {
+    $kategori = Kategori::all();
+    return view('v_lokasi.index', compact('kategori'));
+})->name('lokasi');
+
 
 
 /*
